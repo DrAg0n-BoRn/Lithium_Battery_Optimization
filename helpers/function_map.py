@@ -9,24 +9,6 @@ def coating_material(column: pl.Series) -> pl.Series:
     return column.apply(lambda x: 1 if x is not None and str(x).strip() not in ['无包覆', '/', '-', ''] else 0)
 
 
-#TODO: check unit conflict nm and wt%
-def coating_thickness(column: pl.Series) -> pl.Series:
-    """
-    Coating thickness in nm.
-    """
-    # use regex to try and match 'nm'. else fallback to any number found in the string
-    column_nm = column.str.extract(r'(\d+\.?\d*)\s?nm', 1).cast(pl.Float64)
-    column_fallback = column.str.extract(r'(\d+\.?\d*)', 1).cast(pl.Float64)
-    
-    # combine the two columns, if column_nm is not null, use it, else use column_fallback
-    column_combined_expr = pl.when(column_nm.is_not_null()).then(column_nm).otherwise(column_fallback).cast(pl.Float64).alias('coating thickness')
-    
-    # evaluate expression
-    column_combined = pl.select(column_combined_expr).to_series()
-    
-    return column_combined
-
-
 def dopant_element(column: pl.Series) -> pl.DataFrame:
     """
     One-hot encoding of dopant elements
@@ -54,24 +36,12 @@ def dopant_element(column: pl.Series) -> pl.DataFrame:
     }
     
     # create a new dataframe with one-hot encoding
-    df_dopant_raw = pl.DataFrame({element: column.str.contains(pattern).cast(pl.Int8) for element, pattern in pattern_dict.items()})   
+    df_dopant_raw = pl.DataFrame({element: column.str.contains(pattern).cast(pl.Int8) for element, pattern in pattern_dict.items()})
     
     # Drop columns with all zeros (unused elements)
     df_dopant = df_dopant_raw.select(pl.all().filter(pl.sum() > 0))
     
     return df_dopant
-
-
-# TODO: Unit mismatch
-def dopant_concentration(column: pl.Series) -> pl.Series:
-    """
-    
-    """
-    pass
-
-
-# TODO: Molar ratio / elements
-
 
 
 def crystal_space_group(column: pl.Series) -> pl.Series:
@@ -92,22 +62,114 @@ def crystal_space_group(column: pl.Series) -> pl.Series:
     return crystal_group
     
 
-# TODO: Define categories
-def morphology(column: pl.Series) -> pl.DataFrame:
+def primary_particle_size(column: pl.Series) -> pl.Series:
     """
-    One-hot encoding of morphology
+    Parse particle size from the column in um, μm
+    
+    Transform particle size from nm to um
     """
-    pass
+    # Extract particle size from the column
+    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64).alias('particle size')
+    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64).alias('particle size')
+    
+    # Transform nm to um
+    size_col_nm = size_col_nm / 1000.0
+    
+    # Merge the two columns
+    size_col = (pl.when(size_col_um.is_not_null()).then(size_col_um).otherwise(size_col_nm))
+    
+    #Evaluate expression
+    size = pl.select(size_col).to_series()
+    
+    return size
 
 
-# TODO: particle and size
-
-
-# TODO: Precursor type
-
-
-# TODO: Precursor preparation method
-
+def secondary_particle_size(column: pl.Series) -> pl.Series:
+    """
+    Parse particle size from the column in um, μm
+    
+    Transform particle size from nm to um
+    """
+    # Extract particle size from the column
+    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64).alias('particle size')
+    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64).alias('particle size')
+    
+    # Transform nm to um
+    size_col_nm = size_col_nm / 1000.0
+    
+    # Merge the two columns
+    size_col = (pl.when(size_col_um.is_not_null()).then(size_col_um).otherwise(size_col_nm))
+    
+    #Evaluate expression
+    size = pl.select(size_col).to_series()
+    
+    return size
+    
+    
+def precursor_type(column: pl.Series) -> pl.DataFrame:
+    """
+    One-hot encoding with 3 categories: hydroxide, carbonate, other
+    """
+    hydroxide_expr = (
+        pl.when(column.str.contains(r'氢氧化物|[Hh]ydroxide')).then(1)
+        .otherwise(0)
+        .alias('hydroxide precursor')
+    )
+    carbonate_expr = ( 
+        pl.when(column.str.contains(r'碳酸盐|[Cc]arbonate')).then(1)
+        .otherwise(0)
+        .alias('carbonate precursor')
+    )
+    # Otherwise, if it does not contain "氢氧化物|hydroxide" or "碳酸盐|carbonate", then it is "other"
+    # REMOVE DUE TO COLLINEARITY
+    # other_expr = (
+    #     pl.when(column.str.contains(r'氢氧化物|[Hh]ydroxide|碳酸盐|[Cc]arbonate'))
+    #     .then(0)
+    #     .otherwise(1)
+    #     .alias('other precursor')
+    # )
+    
+    # evaluate expressions and create a dataframe
+    df_combined = pl.concat([pl.select(hydroxide_expr), pl.select(carbonate_expr)], how='horizontal')
+    
+    return df_combined
+    
+    
+def precursor_preparation_method(column: pl.Series) -> pl.DataFrame:
+    """
+    One-hot encoding with 5 categories: solid state, sol-gel, co-precipitation, hydrothermal, mechanical
+    """
+    solid_state_expr = (
+        pl.when(column.str.contains(r'固相|(?i)solid[-\s]?state')).then(1)
+        .otherwise(0)
+        .alias('solid state precursor preparation method')
+    )
+    sol_gel_expr = (
+        pl.when(column.str.contains(r'溶胶|(?i)sol[-\s]?gel')).then(1)
+        .otherwise(0)
+        .alias('sol-gel precursor preparation method')
+    )
+    co_precipitation_expr = (
+        pl.when(column.str.contains(r'共沉淀|(?i)co[\s\-]?precipitation')).then(1)
+        .otherwise(0)
+        .alias('co-precipitation precursor preparation method')
+    )
+    hydrothermal_expr = (
+        pl.when(column.str.contains(r'水热|(?i)hydrothermal')).then(1)
+        .otherwise(0)
+        .alias('hydrothermal precursor preparation method')
+    )
+    mechanical_expr = (
+        pl.when(column.str.contains(r'机械|(?i)mechanical')).then(1)
+        .otherwise(0)
+        .alias('mechanical precursor preparation method')
+    )
+    
+    # evaluate expressions and create a dataframe
+    df_combined = pl.concat([pl.select(solid_state_expr), pl.select(sol_gel_expr), pl.select(co_precipitation_expr), 
+                             pl.select(hydrothermal_expr), pl.select(mechanical_expr)], how='horizontal')
+    
+    return df_combined
 
 
 def precursor_preparation_conditions(column: pl.Series) -> pl.DataFrame:
@@ -117,9 +179,9 @@ def precursor_preparation_conditions(column: pl.Series) -> pl.DataFrame:
     Transform temperature from Celsius to Kelvin
     """
     # Extract pH from the column
-    ph_col = column.str.extract(r'pH\D{0,3}(\d+\.?\d*)').cast(pl.Float64).alias('precursor pH')
+    ph_col = column.str.extract(r'(?i)pH\D{0,3}(\d+\.?\d*)').cast(pl.Float64).alias('precursor pH')
     # Extract temperature from the column
-    temp_col_c = column.str.extract(r'(\d+\.?\d*)\s?\D?\d*\s?°?\s?C').cast(pl.Float64).alias('precursor temperature')
+    temp_col_c = column.str.extract(r'(\d+\.?\d*)\s?\D?\d*\s?°?\s?[Cc]').cast(pl.Float64).alias('precursor temperature')
     # Convert temperature from Celsius to Kelvin
     temp_col = temp_col_c + 273.15
     
@@ -129,19 +191,75 @@ def precursor_preparation_conditions(column: pl.Series) -> pl.DataFrame:
     return df_combined
 
 
-# TODO: Annealing temperature
+def annealing_temperature(column: pl.Series) -> pl.DataFrame:
+    """
+    Parse up to 3 temperatures in 3 columns
+    
+    Transform temperature from Celsius to Kelvin
+    
+    Avoid false matches with "hour" values in the column
+    """
+    extract_all_temp = column.str.extract_all(r'(?i)(\d+\.?\d*)(?!\s*h|\s*小时)').to_list()
+    cleaned_list_of_lists = [[float(x + 273.15) for x in row] if row else [] for row in extract_all_temp]
+    
+    dataframe_schema = {
+        "annealing temperature 1": list(),
+        "annealing temperature 2": list(),
+        "annealing temperature 3": list(),
+    }
+    
+    # if a list has more than 3 values, take the first 3. 
+    # If a list has less than 3 values, fill with '-1'.
+    for temp_list in cleaned_list_of_lists:
+        while len(temp_list) < 3:
+            temp_list.append(-1.0)
+        # reshape data for polars dataframe
+        dataframe_schema["annealing temperature 1"].append(temp_list[0])
+        dataframe_schema["annealing temperature 2"].append(temp_list[1])
+        dataframe_schema["annealing temperature 3"].append(temp_list[2])
+    
+    # build dataframe and return it
+    df = pl.DataFrame(dataframe_schema)
+    return df
 
 
-# TODO: Time
-
+def annealing_time(column: pl.Series) -> pl.DataFrame:
+    """
+    Parse up to 3 times expressed in hours in 3 columns
+    
+    Avoid capturing time in other units
+    """
+    extract_all_times = column.str.extract_all(r'(?i)(\d+\.?\d*)(?!\s*m|\s*分|\s*°?C)').to_list()
+    cleaned_list_of_lists = [[float(x) for x in row] if row else [] for row in extract_all_times]
+    
+    dataframe_schema = {
+        "annealing time 1": list(),
+        "annealing time 2": list(),
+        "annealing time 3": list(),
+    }
+    
+    # if a list has more than 3 values, take the first 3. 
+    # If a list has less than 3 values, fill with '-1'.
+    for time_list in cleaned_list_of_lists:
+        while len(time_list) < 3:
+            time_list.append(-1.0)
+        # reshape data for polars dataframe
+        dataframe_schema["annealing time 1"].append(time_list[0])
+        dataframe_schema["annealing time 2"].append(time_list[1])
+        dataframe_schema["annealing time 3"].append(time_list[2])
+    
+    # build dataframe and return it
+    df = pl.DataFrame(dataframe_schema)
+    return df
+    
 
 def single_poly_crystal(column: pl.Series) -> pl.Series:
     """
     Binary: single crystal (0) or polycrystalline (1)
     """
     poly_expr = (
-    pl.when(column.str.contains(r'单|Single|single')).then(0)
-    .when(column.str.contains(r'多|Poly|poly')).then(1)
+    pl.when(column.str.contains(r'单|(?i)single')).then(0)
+    .when(column.str.contains(r'多|(?i)poly')).then(1)
     .otherwise(None)
     .alias('polycrystalline')
     )
@@ -236,10 +354,6 @@ def electrolyte_system(column: pl.Series) -> pl.DataFrame:
     return df_combined
 
 
-# TODO: Current density
-
-
-
 def cycles(column: pl.Series) -> pl.Series:
     """ 
     Number of cycles
@@ -285,9 +399,34 @@ def capacity(column: pl.Series) -> pl.Series:
     return result_col
 
 
-def parse_percentage(column: pl.Series) -> pl.Series:
+def capacity_retention(column: pl.Series) -> pl.Series:
     """
     Capacity retention
+       
+    Handles:
+    - Overscaled values (e.g. 9065 → 90.65)
+    - Decimal values (e.g. 0.746 → 74.60)
+    - Regular percentage values (e.g. 83.0% -> 83.00)
+    """
+    # parse capacity retention from the column (float)
+    column_percentage_raw = column.str.extract(r'(\d+\.?\d*)\s?%?', 1).cast(pl.Float64)
+    
+    # normalize values to percentage
+    column_percentage_exp = (
+        pl.when((column_percentage_raw > 100.0) & (column_percentage_raw < 10000.0)).then(column_percentage_raw / 100.0)
+        .when(column_percentage_raw <= 1.0).then(column_percentage_raw * 100.0)
+        .otherwise(column_percentage_raw).round(2).cast(pl.Float64)
+        .alias('capacity retention')
+    )
+    
+    # evaluate expression
+    column_percentage = pl.select(column_percentage_exp).to_series()
+    
+    return column_percentage
+
+
+def first_coulombic(column: pl.Series) -> pl.Series:
+    """
     First Coulombic Efficiency (FCE)
        
     Handles:
@@ -312,33 +451,88 @@ def parse_percentage(column: pl.Series) -> pl.Series:
     return column_percentage
 
 
+def parse_special_case(df: pl.DataFrame) -> pl.DataFrame:
+    """
+    Parse "element composition" and "molar ratio" then one hot encode them and return a dataframe.
+    """
+    columns_to_fix = ["element composition", "molar ratio"]
+    
+    df_to_fix = df.select(columns_to_fix)
+    # parse element composition
+    elements_col = df_to_fix["element composition"].str.extract_all(r'([A-Z][a-z]?)').to_list()
+    # parse molar ratio
+    molar_ratio_col = df_to_fix["molar ratio"].str.extract_all(r'(\d+\.?\d*)').to_list()
+    
+    # list of new columns
+    one_hot_columns = [
+        "Li", "Na", "K", "Mg", "Ca", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
+        "B", "O", "F", "P", "S", "Al", "Si", "Zr", "Nb", "Mo", "W", "Sn", "Sb", "C", "H",
+        "Cl", "Br", "I", "Se", "Y", "La", "Ce", "Gd", "Ta"
+    ]
+    
+    # create a dictionary of lists to hold the one-hot encoded values
+    one_hot_dict = {element: [] for element in one_hot_columns}
+    
+    # populate dictionary
+    for element_list, molar_ratio_list in zip(elements_col, molar_ratio_col):
+        # if element_list is None, fill dictionary with 0s
+        if element_list is None or len(element_list) == 0:
+            for element in one_hot_columns:
+                one_hot_dict[element].append(0)
+            continue
+        
+        # if molar_ratio_list is None, fill it with as many 1s as the length of element_list
+        if molar_ratio_list is None:
+            molar_ratio_list = [1] * len(element_list)
+        
+        # Ideally sizes should be the same, but in case they are not we use the length of the element_list 
+        # and modify values to the molar_ratio_list as needed
+        while len(element_list) < len(molar_ratio_list):
+            molar_ratio_list.pop()
+        
+        while len(element_list) > len(molar_ratio_list):
+            molar_ratio_list.append(1)
+            
+        # populate the dictionary with values based on the presence of elements
+        for element, molar_ratio in zip(element_list, molar_ratio_list):
+            if element in one_hot_columns:
+                one_hot_dict[element].append(molar_ratio)
+        # populate the dictionary with 0s for the rest of the elements
+        for element in one_hot_columns:
+            if element not in element_list:
+                one_hot_dict[element].append(0)
+    
+    # create a new dataframe from the dictionary
+    one_hot_df = pl.DataFrame(one_hot_dict)
+    # drop columns with all zeros (unused elements)
+    one_hot_df = one_hot_df.select(pl.all().filter(pl.sum() > 0))
+
+    return one_hot_df
+
+
+
 ### Distribute rules to the columns
 function_map = {
     'coating material': coating_material,
-    'coating thickness': coating_thickness,
     'dopant element': dopant_element,
-    'dopant concentration': dopant_concentration,
-    'molar ratio': None,
     'crystal space group': crystal_space_group,
-    'morphology': morphology,
-    'primary particle': None,
-    'size/diameter 1': None,
-    'secondary particle': None,
-    'size/diameter 2': None,
-    'precursor type': None,
-    'precursor preparation method': None,
+    'primary particle size': primary_particle_size,
+    'secondary particle size': secondary_particle_size,
+    'precursor type': precursor_type,
+    'precursor preparation method': precursor_preparation_method,
     'precursor preparation conditions': precursor_preparation_conditions,
-    'annealing temperature': None,
-    'time': None,
+    'annealing temperature': annealing_temperature,
+    'annealing time': annealing_time,
     'single poly crystal': single_poly_crystal,
     'voltage range': voltage_range,
     'electrolyte system': electrolyte_system,
-    'current density': None,
     'cycles': cycles,
     'anode material': anode_material,
+    'element composition': None,    #handle as special case
+    'molar ratio': None,    #handle as special case
     
     'capacity': capacity,
-    'capacity retention': parse_percentage,
-    'first Coulombic efficiency': parse_percentage,
+    'capacity retention': capacity_retention,
+    'first Coulombic efficiency': first_coulombic,
 }
 
