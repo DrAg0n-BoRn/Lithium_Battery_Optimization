@@ -1,34 +1,33 @@
 {
-    "材料分子式": "molecular formula",
     "包覆层材料": "coating material",
-    "包覆层厚度": "coating thickness",
     "掺杂元素": "dopant element",
-    "掺杂含量": "dopant concentration",
     "元素组成": "element composition",
     "不同摩尔比": "molar ratio",
     "空间群": "crystal space group",
-    "形貌": "morphology",
-    "一次颗粒": "primary particle",
-    "尺寸/直径 1": "size/diameter 1",
-    "二次颗粒": "secondary particle",
-    "尺寸/直径 2": "size/diameter 2",
+    "尺寸/直径 1": "primary particle size",
+    "尺寸/直径 2": "secondary particle size",
     "前驱体类型": "precursor type",
     "前驱体制备方法": "precursor preparation method",
     "前驱体制备条件": "precursor preparation conditions",
     "退火温度": "annealing temperature",
-    "时间": "time",
+    "时间": "annealing time",
     "单晶or多晶": "single crystal or polycrystalline",
     "电压区间": "voltage range",
     "电解液体系": "electrolyte system",
-    "电流密度": "current density",
     "全电池匹配的负极材料": "anode material matched with full cell",
     "圈数": "cycles",
 
     "容量": "capacity",
     "容量保持率": "capacity retention",
     "首次库伦效率": "first Coulombic efficiency",
-    
 
+    "电流密度": "current density",
+    "形貌": "morphology",
+    "一次颗粒": "primary particle",
+    "二次颗粒": "secondary particle",
+    "掺杂含量": "dopant concentration",
+    "包覆层厚度": "coating thickness",
+    "材料分子式": "molecular formula",
     "带隙": "band gap",
     "功函数": "work function",
     "费米能级": "Fermi level",
@@ -37,7 +36,16 @@
     "吸脱附": "adsorption/desorption",
     "全电池能量密度": "full cell energy density",
     "全电池功率密度": "full cell power density",
-    "数据来源": "data source"
+    "数据来源": "data source",
+
+
+    "氢氧化物": "hydroxide",
+    "碳酸盐": "carbonate",
+    "共沉淀": "co-precipitation",
+    "固相反应": "solid-state reaction",
+    "溶胶-凝胶法": "sol-gel method",
+    "机械法": "mechanical",
+    "水热法": "hydrothermal"
 }
 
 
