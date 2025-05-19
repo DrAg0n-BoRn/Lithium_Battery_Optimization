@@ -1,5 +1,5 @@
 from helpers.function_map import function_map, parse_special_case
-from paths import ROOT_DIR, RAW_DATA_DIR, DATA_DIR, RESULTS_DIR, RAW_CSV_PATH, PROCESSED_CSV_PATH, make_directories
+from paths import RAW_DATA_DIR, RAW_CSV_PATH, PROCESSED_CSV_PATH, make_directories
 import polars as pl
 import os
 
