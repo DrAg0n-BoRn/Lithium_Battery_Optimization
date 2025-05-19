@@ -6,7 +6,9 @@ def coating_material(column: pl.Series) -> pl.Series:
     Binary: present (1) or absent (0) coating material.
     """
     # check if the value is '无包覆', or '/', or '-' or empty
-    return column.apply(lambda x: 1 if x is not None and str(x).strip() not in ['无包覆', '/', '-', ''] else 0)
+    result = column.apply(lambda x: 1 if x is not None and str(x).strip() not in ['无包覆', '/', '-', ''] else 0)
+    result.rename(column.name)
+    return result
 
 
 def dopant_element(column: pl.Series) -> pl.DataFrame:
@@ -32,7 +34,7 @@ def dopant_element(column: pl.Series) -> pl.DataFrame:
     ]
     
     pattern_dict = {
-        element: rf'(?<![A-Za-z]){element}(?![a-z])' for element in dopant_elements
+        f"dopant_{element}": rf'(?<![A-Za-z]){element}(?![a-z])' for element in dopant_elements
     }
     
     # create a new dataframe with one-hot encoding
@@ -69,8 +71,8 @@ def primary_particle_size(column: pl.Series) -> pl.Series:
     Transform particle size from nm to um
     """
     # Extract particle size from the column
-    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64).alias('particle size')
-    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64).alias('particle size')
+    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64, strict=False).alias('particle size')
+    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64, strict=False).alias('particle size')
     
     # Transform nm to um
     size_col_nm = size_col_nm / 1000.0
@@ -91,8 +93,8 @@ def secondary_particle_size(column: pl.Series) -> pl.Series:
     Transform particle size from nm to um
     """
     # Extract particle size from the column
-    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64).alias('particle size')
-    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64).alias('particle size')
+    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64, strict=False).alias('particle size')
+    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64, strict=False).alias('particle size')
     
     # Transform nm to um
     size_col_nm = size_col_nm / 1000.0
@@ -179,9 +181,9 @@ def precursor_preparation_conditions(column: pl.Series) -> pl.DataFrame:
     Transform temperature from Celsius to Kelvin
     """
     # Extract pH from the column
-    ph_col = column.str.extract(r'(?i)pH\D{0,3}(\d+\.?\d*)').cast(pl.Float64).alias('precursor pH')
+    ph_col = column.str.extract(r'(?i)pH\D{0,3}(\d+\.?\d*)').cast(pl.Float64, strict=False).alias('precursor pH')
     # Extract temperature from the column
-    temp_col_c = column.str.extract(r'(\d+\.?\d*)\s?\D?\d*\s?°?\s?[Cc]').cast(pl.Float64).alias('precursor temperature')
+    temp_col_c = column.str.extract(r'(\d+\.?\d*)\s?\D?\d*\s?°?\s?[Cc]').cast(pl.Float64, strict=False).alias('precursor temperature')
     # Convert temperature from Celsius to Kelvin
     temp_col = temp_col_c + 273.15
     
@@ -274,10 +276,10 @@ def voltage_range(column: pl.Series) -> pl.DataFrame:
     Parse voltage range from the column -> 2 columns
     """
     # Extract minimum voltage
-    voltage_min = column.str.extract(r'(\d+\.?\d*)\D').cast(pl.Float64).alias('minimum voltage')
+    voltage_min = column.str.extract(r'(\d+\.?\d*)\D').cast(pl.Float64, strict=False).alias('minimum voltage')
     
     # Extract maximum voltage
-    voltage_max = column.str.extract(r'\d+\.?\d*\D+(\d+\.?\d*)').cast(pl.Float64).alias('maximum voltage')
+    voltage_max = column.str.extract(r'\d+\.?\d*\D+(\d+\.?\d*)').cast(pl.Float64, strict=False).alias('maximum voltage')
     
     # Combine the two columns into a dataframe
     df_combined = pl.concat([voltage_min, voltage_max], how='horizontal')
@@ -290,7 +292,7 @@ def electrolyte_system(column: pl.Series) -> pl.DataFrame:
     One-hot encoding of electrolyte system
     """
     # parse electrolyte molarity
-    mol = column.str.extract(r'(\d+\.?\d*)\s?M').cast(pl.Float64).alias('electrolyte molarity')
+    mol = column.str.extract(r'(\d+\.?\d*)\s?M').cast(pl.Float64, strict=False).alias('electrolyte molarity')
     
     # parse electrolyte (Binary: if LiPF6, 1, else 0)
     electrolyte_expr = (pl.when(column.str.contains(r'LiPF6?')).then(1).otherwise(0).alias('electrolyte LiPF6'))
@@ -339,7 +341,7 @@ def electrolyte_system(column: pl.Series) -> pl.DataFrame:
     ]
     
     pattern_dict = {
-        solvent: rf'(?<![A-Za-z]){solvent}(?![A-Za-z])' for solvent in solvents
+        f"solvent_{solvent}": rf'(?<![A-Za-z]){solvent}(?![A-Za-z])' for solvent in solvents
     }
     
     # create a new dataframe with one-hot encoding
@@ -359,7 +361,8 @@ def cycles(column: pl.Series) -> pl.Series:
     Number of cycles
     """
     # parse cycles from the column (integer)
-    column_cycles = column.str.extract(r'(\d+)', 1).cast(pl.Int64)
+    column_cycles = column.str.extract(r'(\d+)', 1).cast(pl.Int64, strict=False)
+    return column_cycles
 
 
 def anode_material(column: pl.Series) -> pl.DataFrame:
@@ -387,8 +390,8 @@ def capacity(column: pl.Series) -> pl.Series:
     Capacity in mAh/g
     """
     # use regex to try and match 'mAh/g'. else fallback to any number found in the string
-    column_mAh = column.str.extract(r'(\d+\.?\d*)\s?mAh', 1).cast(pl.Float64)
-    column_fallback = column.str.extract(r'(\d+\.?\d*)', 1).cast(pl.Float64)
+    column_mAh = column.str.extract(r'(\d+\.?\d*)\s?mAh', 1).cast(pl.Float64, strict=False)
+    column_fallback = column.str.extract(r'(\d+\.?\d*)', 1).cast(pl.Float64, strict=False)
     
     # combine the two columns,\. If column_mAh is not null, use it, else use column_fallback
     result_col_exp = (pl.when(column_mAh.is_not_null()).then(column_mAh).otherwise(column_fallback).cast(pl.Float64).alias('capacity'))
@@ -409,13 +412,14 @@ def capacity_retention(column: pl.Series) -> pl.Series:
     - Regular percentage values (e.g. 83.0% -> 83.00)
     """
     # parse capacity retention from the column (float)
-    column_percentage_raw = column.str.extract(r'(\d+\.?\d*)\s?%?', 1).cast(pl.Float64)
+    column_percentage_raw = column.str.extract(r'(\d+\.?\d*)\s?%?', 1).cast(pl.Float64, strict=False)
     
     # normalize values to percentage
     column_percentage_exp = (
         pl.when((column_percentage_raw > 100.0) & (column_percentage_raw < 10000.0)).then(column_percentage_raw / 100.0)
         .when(column_percentage_raw <= 1.0).then(column_percentage_raw * 100.0)
-        .otherwise(column_percentage_raw).round(2).cast(pl.Float64)
+        .when(column_percentage_raw.is_na()).then(None)
+        .otherwise(column_percentage_raw).round(2).cast(pl.Float64, strict=False)
         .alias('capacity retention')
     )
     
@@ -435,13 +439,14 @@ def first_coulombic(column: pl.Series) -> pl.Series:
     - Regular percentage values (e.g. 83.0% -> 83.00)
     """
     # parse capacity retention from the column (float)
-    column_percentage_raw = column.str.extract(r'(\d+\.?\d*)\s?%?', 1).cast(pl.Float64)
+    column_percentage_raw = column.str.extract(r'(\d+\.?\d*)\s?%?', 1).cast(pl.Float64, strict=False)
     
     # normalize values to percentage
     column_percentage_exp = (
         pl.when((column_percentage_raw > 100.0) & (column_percentage_raw < 10000.0)).then(column_percentage_raw / 100.0)
         .when(column_percentage_raw <= 1.0).then(column_percentage_raw * 100.0)
-        .otherwise(column_percentage_raw).round(2).cast(pl.Float64)
+        .when(column_percentage_raw.is_na()).then(None)
+        .otherwise(column_percentage_raw).round(2).cast(pl.Float64, strict=False)
         .alias('capacity retention')
     )
     
@@ -523,7 +528,7 @@ function_map = {
     'precursor preparation conditions': precursor_preparation_conditions,
     'annealing temperature': annealing_temperature,
     'annealing time': annealing_time,
-    'single poly crystal': single_poly_crystal,
+    'single crystal or polycrystalline': single_poly_crystal,
     'voltage range': voltage_range,
     'electrolyte system': electrolyte_system,
     'cycles': cycles,
