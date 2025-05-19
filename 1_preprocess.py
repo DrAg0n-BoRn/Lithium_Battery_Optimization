@@ -1,4 +1,4 @@
-from helpers.function_map import function_map
+from helpers.function_map import function_map, parse_special_case
 from paths import ROOT_DIR, RAW_DATA_DIR, DATA_DIR, RESULTS_DIR, RAW_CSV_PATH, PROCESSED_CSV_PATH, make_directories
 import polars as pl
 import os
@@ -48,7 +48,7 @@ def preprocess_data() -> None:
         concatenate_raw_data()
     
     # Read the data CSV file into a DataFrame
-    df = pl.read_csv(RAW_CSV_PATH)
+    df = pl.read_csv(RAW_CSV_PATH, infer_schema=False)
     
     # Check that column names match to function map
     for feature_name in df.columns:
@@ -56,8 +56,8 @@ def preprocess_data() -> None:
             raise ValueError(f"Feature '{feature_name}' not found in function map.")
     
     # Apply the functions to the columns
+    results = []
     for feature_name, function in function_map.items():
-        results = []
         if function is not None:
             output = function(df[feature_name])
             # Check if the output is a Series or DataFrame
@@ -67,6 +67,9 @@ def preprocess_data() -> None:
                 results.extend(output.get_columns())
             else:
                 raise ValueError(f"Function for '{feature_name}' did not return a Series or DataFrame.")
+    
+    # Special case
+    results.extend(parse_special_case(df).get_columns())
     
     if results:
         # Make a new DataFrame from the results
