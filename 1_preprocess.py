@@ -1,5 +1,5 @@
 from helpers.function_map import function_map, parse_special_case
-from paths import RAW_DATA_DIR, RAW_CSV_PATH, PROCESSED_CSV_PATH, make_directories
+from paths import RAW_DATA_DIR, RAW_CSV_FILE, PROCESSED_CSV_FILE, make_directories
 import polars as pl
 import os
 
@@ -30,10 +30,10 @@ def concatenate_raw_data() -> None:
                     raise ValueError(f"Column names or order do not match in files:\n\t{filenames[0]}\n\t{filenames[i]}.")
             concatenated_df = pl.concat(dfs, how="vertical")
             # Write the concatenated DataFrame to a new CSV file
-            concatenated_df.write_csv(RAW_CSV_PATH)
+            concatenated_df.write_csv(RAW_CSV_FILE)
         else:
             # If only one DataFrame, write it to the CSV file
-            dfs[0].write_csv(RAW_CSV_PATH)
+            dfs[0].write_csv(RAW_CSV_FILE)
         print(f"Concatenated {len(dfs)} CSV files of raw data.")
     else:
         raise ValueError(f"No CSV files found in '{RAW_DATA_DIR}'")
@@ -44,11 +44,11 @@ def preprocess_data() -> None:
     Preprocesses the data by applying functions from function_map
     """
     # If the data CSV file does not exist, create concatenate_raw_data 
-    if not os.path.exists(RAW_CSV_PATH):
+    if not os.path.exists(RAW_CSV_FILE):
         concatenate_raw_data()
     
     # Read the data CSV file into a DataFrame
-    df = pl.read_csv(RAW_CSV_PATH, infer_schema=False)
+    df = pl.read_csv(RAW_CSV_FILE, infer_schema=False)
     
     # Check that column names match to function map
     for feature_name in df.columns:
@@ -75,8 +75,8 @@ def preprocess_data() -> None:
         # Make a new DataFrame from the results
         results_df = pl.DataFrame(results)
         # save the results to a new CSV file
-        results_df.write_csv(PROCESSED_CSV_PATH)
-        print(f"Preprocessed data saved to '{PROCESSED_CSV_PATH}'")
+        results_df.write_csv(PROCESSED_CSV_FILE)
+        print(f"Preprocessed data saved to '{PROCESSED_CSV_FILE}'")
     else:
         raise ValueError("No results. Check the function map and data.")
 
