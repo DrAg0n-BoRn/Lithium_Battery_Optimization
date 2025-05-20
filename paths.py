@@ -13,21 +13,30 @@ if str(ROOT_DIR) not in sys.path:
 RAW_DATA_DIR = os.path.join(ROOT_DIR, "raw_data")
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 RESULTS_DIR = os.path.join(ROOT_DIR, "results")
-MICE_BASE_DIR = os.path.join(ROOT_DIR, "MICE")
+
+MICE_BASE_DIR = os.path.join(RESULTS_DIR, "MICE")
 MICE_IMPUTED_METRICS_DIR = os.path.join(MICE_BASE_DIR, "Distribution Metrics")
 IMPUTED_DATASETS_DIR = os.path.join(MICE_BASE_DIR, "Imputed Datasets")
 
+MODEL_METRICS_DIR = os.path.join(RESULTS_DIR, "Model Metrics")
+
 ### Files ###
-RAW_CSV_PATH = os.path.join(DATA_DIR, "start_data.csv")
-PROCESSED_CSV_PATH = os.path.join(DATA_DIR, "processed_data.csv")
+RAW_CSV_FILE = os.path.join(DATA_DIR, "start_data.csv")
+PROCESSED_CSV_FILE = os.path.join(DATA_DIR, "preprocessed_data.csv")
+ENGINEERED_CSV_FILE = os.path.join(DATA_DIR, "engineered_data.csv")
 
 
-# Function to make directories if they do not exist
 def make_directories():
     """
     Creates directories if they do not exist
     """
-    for d in [RAW_DATA_DIR, DATA_DIR, RESULTS_DIR, MICE_BASE_DIR, MICE_IMPUTED_METRICS_DIR, IMPUTED_DATASETS_DIR]:
+    for d in [RAW_DATA_DIR, 
+              DATA_DIR, 
+              RESULTS_DIR, 
+              MICE_BASE_DIR, 
+              MICE_IMPUTED_METRICS_DIR, 
+              IMPUTED_DATASETS_DIR,
+              MODEL_METRICS_DIR]:
         os.makedirs(d, exist_ok=True)
 
 
