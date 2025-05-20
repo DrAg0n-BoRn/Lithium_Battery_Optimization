@@ -43,4 +43,3 @@ def make_directories():
 if __name__ == "__main__":
     # make directories if they do not exist
     make_directories()
-        
