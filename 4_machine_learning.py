@@ -25,9 +25,8 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
 
 
-###### Constants ######
-RANDOM_STATE = 101
-TARGET_COLS = []    # List of strings with target columns
+###### Run script directly ######
+TARGET_COLS: list[str] = []    # List of strings with target columns
 #######################
 
 ###### 1. Dataset Loader ######
@@ -49,7 +48,7 @@ def yield_imputed_dataframe(datasets_dir: str):
         yield (df, filename)
 
 #Split a dataset into features and targets datasets
-def dataset_yielder(df: pd.DataFrame, target_cols: list[str]=TARGET_COLS):
+def dataset_yielder(df: pd.DataFrame, target_cols: list[str]):
     ''' 
     Yields one Tuple at a time: `(df_features, df_target, feature_names, target_name)`
     '''
@@ -61,7 +60,7 @@ def dataset_yielder(df: pd.DataFrame, target_cols: list[str]=TARGET_COLS):
         yield (df_features, df_target, feature_names, target_col)
 
 ###### 2. Initialize Models ######
-def get_models(task: Literal["classification", "regression"], is_balanced: bool = True, 
+def get_models(task: Literal["classification", "regression"], random_state: int=101, is_balanced: bool = True, 
               L1_regularization: float = 1.0, L2_regularization: float = 1.0, learning_rate: float=0.005) -> dict:
     ''' 
     Returns a dictionary `{Model_Name: Model}` with new instances of models.
@@ -94,7 +93,7 @@ def get_models(task: Literal["classification", "regression"], is_balanced: bool 
         'learning_rate': learning_rate,
         'subsample': 0.8,
         'colsample_bytree': 0.8,
-        'random_state': RANDOM_STATE,
+        'random_state': random_state,
         'reg_alpha': L1_regularization,
         'reg_lambda': L2_regularization,
     }
@@ -105,7 +104,7 @@ def get_models(task: Literal["classification", "regression"], is_balanced: bool 
         'max_depth': 5,
         'subsample': 0.8,
         'colsample_bytree': 0.8,
-        'random_state': RANDOM_STATE,
+        'random_state': random_state,
         'verbose': -1,
         'reg_alpha': L1_regularization,
         'reg_lambda': L2_regularization,
@@ -116,7 +115,7 @@ def get_models(task: Literal["classification", "regression"], is_balanced: bool 
         'learning_rate': learning_rate,
         'max_depth': 5,
         'min_samples_leaf': 30,
-        'random_state': RANDOM_STATE,
+        'random_state': random_state,
         'l2_regularization': L2_regularization,
     }
 
@@ -157,8 +156,8 @@ def get_models(task: Literal["classification", "regression"], is_balanced: bool 
 
 ###### 3. Process Dataset ######
 # function to split data into train and test
-def _split_data(features, target, test_size):
-    X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=test_size, random_state=RANDOM_STATE, stratify=target)   
+def _split_data(features, target, test_size, random_state):
+    X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=test_size, random_state=random_state, stratify=target)   
     return X_train, X_test, y_train, y_test
 
 # function to standardize the data
@@ -170,20 +169,20 @@ def _standardize_data(train_features, test_features):
 
 # Over-sample minority class (Positive cases) and return several single target datasets (Classification)
 def _resample(X_train_scaled: np.ndarray, y_train: pd.Series, 
-                strategy: Literal[r"ADASYN", r'SMOTE', r'RANDOM', r'UNDERSAMPLE']):
+              strategy: Literal[r"ADASYN", r'SMOTE', r'RANDOM', r'UNDERSAMPLE'], random_state):
     ''' 
     Oversample minority class or undersample majority class.
     
     Returns a Tuple `(Features: nD-Array, Target: 1D-array)`
     '''
     if strategy == 'SMOTE':
-        resample_algorithm = SMOTE(random_state=RANDOM_STATE, k_neighbors=3)
+        resample_algorithm = SMOTE(random_state=random_state, k_neighbors=3)
     elif strategy == 'RANDOM':
-        resample_algorithm = RandomOverSampler(random_state=RANDOM_STATE)
+        resample_algorithm = RandomOverSampler(random_state=random_state)
     elif strategy == 'UNDERSAMPLE':
-        resample_algorithm = RandomUnderSampler(random_state=RANDOM_STATE)
+        resample_algorithm = RandomUnderSampler(random_state=random_state)
     elif strategy == 'ADASYN':
-        resample_algorithm = ADASYN(random_state=RANDOM_STATE, n_neighbors=3)
+        resample_algorithm = ADASYN(random_state=random_state, n_neighbors=3)
     else:
         raise ValueError(f"Invalid resampling strategy: {strategy}")
     
@@ -193,7 +192,7 @@ def _resample(X_train_scaled: np.ndarray, y_train: pd.Series,
 # DATASET PIPELINE
 def dataset_pipeline(df_features: pd.DataFrame, df_target: pd.Series, task: Literal["classification", "regression"],
                      resample_strategy: Union[Literal[r"ADASYN", r'SMOTE', r'RANDOM', r'UNDERSAMPLE'], None], 
-                     test_size: float=0.2, debug: bool=False):
+                     test_size: float=0.2, debug: bool=False, random_state: int=101):
     ''' 
     1. Make Train/Test splits
     2. Standardize Train and Test Features
@@ -210,7 +209,7 @@ def dataset_pipeline(df_features: pd.DataFrame, df_target: pd.Series, task: Lite
         print(f"\tUnique values for '{df_target.name}': {unique_values}")
     
     #Train test split
-    X_train, X_test, y_train, y_test = _split_data(features=df_features, target=df_target, test_size=test_size)
+    X_train, X_test, y_train, y_test = _split_data(features=df_features, target=df_target, test_size=test_size, random_state=random_state)
     
     #DEBUG
     if debug:
@@ -227,7 +226,7 @@ def dataset_pipeline(df_features: pd.DataFrame, df_target: pd.Series, task: Lite
     if resample_strategy is None or task == "regression":
         X_train_oversampled, y_train_oversampled = X_train_scaled, y_train
     else:
-        X_train_oversampled, y_train_oversampled = _resample(X_train_scaled=X_train_scaled, y_train=y_train, strategy=resample_strategy)
+        X_train_oversampled, y_train_oversampled = _resample(X_train_scaled=X_train_scaled, y_train=y_train, strategy=resample_strategy, random_state=random_state)
     
     #DEBUG
     if debug:
@@ -490,18 +489,18 @@ def train_test_pipeline(model, model_name: str, dataset_id: str, task: Literal["
     return trained_model, y_pred
 
 ###### 5. Execution ######
-def main(imputed_datasets_dir: str, task: Literal["classification", "regression"],
+def main(datasets_dir: str, target_columns: list[str], task: Literal["classification", "regression"]="regression",
          resample_strategy: Literal[r"ADASYN", r'SMOTE', r'RANDOM', r'UNDERSAMPLE', None]=None, 
-         test_size: float=0.2, debug:bool=False, L1_regularization: float=0.5, L2_regularization: float=0.5, learning_rate: float=0.005):
+         test_size: float=0.2, debug:bool=False, L1_regularization: float=0.5, L2_regularization: float=0.5, learning_rate: float=0.005, random_state: int=101):
     #Check paths
-    _check_paths(imputed_datasets_dir)
+    _check_paths(datasets_dir)
     #Yield imputed dataset
-    for dataframe, dataframe_name in yield_imputed_dataframe(imputed_datasets_dir):
+    for dataframe, dataframe_name in yield_imputed_dataframe(datasets_dir):
         #Yield features dataframe and target dataframe
-        for df_features, df_target, feature_names, target_name in dataset_yielder(df=dataframe, target_cols=TARGET_COLS):
+        for df_features, df_target, feature_names, target_name in dataset_yielder(df=dataframe, target_cols=target_columns):
             #Dataset pipeline
             X_train, y_train, X_test, y_test = dataset_pipeline(df_features=df_features, df_target=df_target, task=task,
-                                                                resample_strategy=resample_strategy, test_size=test_size, debug=debug)
+                                                                resample_strategy=resample_strategy, test_size=test_size, debug=debug, random_state=random_state)
             #Get models
             models_dict = get_models(task=task, is_balanced=False if resample_strategy is None else True, 
                                      L1_regularization=L1_regularization, L2_regularization=L2_regularization, learning_rate=learning_rate)
@@ -519,16 +518,12 @@ def _check_paths(datasets_dir: str):
     if not os.path.isdir(MODEL_METRICS_DIR):
         os.makedirs(MODEL_METRICS_DIR)   
     if not os.path.isdir(datasets_dir):
-        raise IOError(f"Imputed datasets directory '{datasets_dir}' not found.\nCheck path or run MICE script first.")
+        raise IOError(f"Datasets directory '{datasets_dir}' not found.\nCheck path or run MICE script first.")
     return datasets_dir
 
 
 if __name__ == "__main__":
-    main(imputed_datasets_dir=IMPUTED_DATASETS_DIR, 
-         task="regression", 
-         test_size=0.2, 
-         debug=False, 
-         resample_strategy=None, 
-         L1_regularization=0.5, 
-         L2_regularization=0.5,
-         learning_rate=0.005)
+    if not TARGET_COLS:
+        raise ValueError("Fill 'TARGET_COLS' before running this script.")
+    main(datasets_dir=IMPUTED_DATASETS_DIR,
+         target_columns=TARGET_COLS)
