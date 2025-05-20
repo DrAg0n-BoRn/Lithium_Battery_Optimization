@@ -470,6 +470,8 @@ def train_test_pipeline(model, model_name: str, dataset_id: str, task: Literal["
     '''
     print(f"\tModel: {model_name} for Target: {target_id}...")
     trained_model = _train_model(model=model, train_features=train_features, train_target=train_target)
+    if debug:
+        print(f"Trained model object: {type(trained_model)}")
     save_directory = _local_directories(model_name=model_name, dataset_id=dataset_id)
     if task == "classification":
         y_pred = _evaluate_model_classification(model=trained_model, model_name=model_name, save_dir=save_directory, 
@@ -479,6 +481,9 @@ def train_test_pipeline(model, model_name: str, dataset_id: str, task: Literal["
                              x_test_scaled=test_features, single_y_test=test_target, target_id=target_id)
     else:
         raise ValueError(f"Unrecognized task '{task}' for model training,")
+    if debug:
+        print(f"Predicted vector: {type(y_pred)} with shape: {y_pred.shape}")
+    
     get_shap_values(model=trained_model, model_name=model_name, save_dir=save_directory,
                     features_to_explain=train_features, feature_names=feature_names, target_id=target_id, task=task)
     print("\t...done.")
@@ -488,6 +493,8 @@ def train_test_pipeline(model, model_name: str, dataset_id: str, task: Literal["
 def main(imputed_datasets_dir: str, task: Literal["classification", "regression"],
          resample_strategy: Literal[r"ADASYN", r'SMOTE', r'RANDOM', r'UNDERSAMPLE', None]=None, 
          test_size: float=0.2, debug:bool=False, L1_regularization: float=0.5, L2_regularization: float=0.5, learning_rate: float=0.005):
+    #Check paths
+    _check_paths(imputed_datasets_dir)
     #Yield imputed dataset
     for dataframe, dataframe_name in yield_imputed_dataframe(imputed_datasets_dir):
         #Yield features dataframe and target dataframe
@@ -508,15 +515,15 @@ def main(imputed_datasets_dir: str, task: Literal["classification", "regression"
     print("\nTraining and evaluation complete.")
     
     
-def check_paths():
+def _check_paths(datasets_dir: str):
     if not os.path.isdir(MODEL_METRICS_DIR):
         os.makedirs(MODEL_METRICS_DIR)   
-    if not os.path.isdir(IMPUTED_DATASETS_DIR):
-        raise IOError("Imputed datasets directory not found. Run MICE script first.")
+    if not os.path.isdir(datasets_dir):
+        raise IOError(f"Imputed datasets directory '{datasets_dir}' not found.\nCheck path or run MICE script first.")
+    return datasets_dir
 
 
 if __name__ == "__main__":
-    check_paths()
     main(imputed_datasets_dir=IMPUTED_DATASETS_DIR, 
          task="regression", 
          test_size=0.2, 
