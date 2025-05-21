@@ -46,22 +46,63 @@ def dopant_element(column: pl.Series) -> pl.DataFrame:
     return df_dopant
 
 
-def crystal_space_group(column: pl.Series) -> pl.Series:
+def crystal_space_group(column: pl.Series) -> pl.DataFrame:
     """
-    Return the number of groups found: 1 (multiple), or 0 (single)
+    One-hot encoding of crystal space groups
     """
-    crystal_group_expr = (
-        pl.when(column.str.strip_chars().is_in(["", None, "N/A", "无", "NA"]))
-        .then(None)
-        .when(column.str.contains(r"[、,和;]"))
-        .then(1)
-        .otherwise(0)
-        .alias("multiple crystal space group")
-    )
+    groups = ["R-3m", 
+              "C2/m", 
+              "Fd-3m",
+              "R-3m+C2/m-mix", 
+              "R-3m+Fd-3m-mix", 
+              "R-3m+C2/m+Fd-3m-mix",
+              "Hexagonal", 
+              "Orthorhombic", 
+              "Cubic",
+              "Monoclinic", 
+              "Triclinic"]
     
-    # evaluate expression
-    crystal_group = pl.select(crystal_group_expr).to_series()
-    return crystal_group
+    groups_dict = {group : list() for group in groups}
+    
+    def _assign_value(winner: str):
+        for _group in groups.copy():
+            if _group == winner:
+                groups_dict[_group].append(1)
+            else:
+                groups_dict[_group].append(0)
+    
+    for string in column:
+        if string is None:
+            _assign_value("")
+        elif "R" in string and "C2" in string and "Fd" in string:
+            _assign_value(groups[5])
+        elif "R" in string and "Fd" in string:
+            _assign_value(groups[4])
+        elif "R" in string and "C2" in string:
+            _assign_value(groups[3])
+        elif "Fd" in string:
+            _assign_value(groups[2])
+        elif "C2" in string:
+            _assign_value(groups[1])
+        elif "R" in string:
+            _assign_value(groups[0])
+        elif "hexagonal" in string.lower() or "P6" in string or "P3" in string:
+            _assign_value(groups[6])
+        elif "orthorhombic" in string.lower() or "Pn" in string:
+            _assign_value(groups[7])
+        elif "cubic" in string.lower():
+            _assign_value(groups[8])
+        elif "monoclinic" in string.lower():
+            _assign_value(groups[9])
+        elif "triclinic" in string.lower():
+            _assign_value(groups[10])
+        else:
+            _assign_value("")
+    
+    # make dataframe
+    groups_df = pl.DataFrame(groups_dict)
+    
+    return groups_df
     
 
 def primary_particle_size(column: pl.Series) -> pl.Series:
@@ -271,20 +312,20 @@ def single_poly_crystal(column: pl.Series) -> pl.Series:
     return poly
 
 
-def voltage_range(column: pl.Series) -> pl.DataFrame:
+def voltage_range(column: pl.Series) -> pl.Series:
     """
-    Parse voltage range from the column -> 2 columns
+    Parse voltage range from the column
     """
     # Extract minimum voltage
-    voltage_min = column.str.extract(r'(\d+\.?\d*)\D').cast(pl.Float64, strict=False).alias('minimum voltage')
+    voltage_min = column.str.extract(r'(\d+\.?\d*)\D').cast(pl.Float64, strict=False)
     
     # Extract maximum voltage
-    voltage_max = column.str.extract(r'\d+\.?\d*\D+(\d+\.?\d*)').cast(pl.Float64, strict=False).alias('maximum voltage')
+    voltage_max = column.str.extract(r'\d+\.?\d*\D+(\d+\.?\d*)').cast(pl.Float64, strict=False)
     
-    # Combine the two columns into a dataframe
-    df_combined = pl.concat([voltage_min, voltage_max], how='horizontal')
+    # get average voltage
+    voltage_avg = ((voltage_min + voltage_max) / 2).fill_null(voltage_min).fill_null(voltage_max).alias("average voltage")
     
-    return df_combined
+    return voltage_avg
 
 
 def electrolyte_system(column: pl.Series) -> pl.DataFrame:
