@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 import os
 from typing import Literal, Union
+import joblib
 
 from imblearn.over_sampling import ADASYN, SMOTE, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
@@ -251,7 +252,13 @@ def _local_directories(model_name: str, dataset_id: str, save_dir: str):
         os.makedirs(model_dir)
         
     return model_dir
-    
+
+# save model
+def _save_model(trained_model, model_name: str, save_directory: str):
+    full_path = os.path.join(save_directory, f"{model_name}_model.joblib")
+    joblib.dump(trained_model, full_path)
+
+
 # function to evaluate the model and save metrics (Classification)
 def _evaluate_model_classification(model, model_name: str, 
                                    save_dir: str,
@@ -459,7 +466,7 @@ def train_test_pipeline(model, model_name: str, dataset_id: str, task: Literal["
              train_features: np.ndarray, train_target: np.ndarray,
              test_features: np.ndarray, test_target: np.ndarray,
              feature_names: list[str], target_id: str, save_dir: str,
-             debug: bool=False):
+             debug: bool=False, save_model: bool=False):
     ''' 
     1. Train model.
     2. Evaluate model.
@@ -471,26 +478,30 @@ def train_test_pipeline(model, model_name: str, dataset_id: str, task: Literal["
     trained_model = _train_model(model=model, train_features=train_features, train_target=train_target)
     if debug:
         print(f"Trained model object: {type(trained_model)}")
-    save_directory = _local_directories(model_name=model_name, dataset_id=dataset_id, save_dir=save_dir)
+    local_save_directory = _local_directories(model_name=model_name, dataset_id=dataset_id, save_dir=save_dir)
+    
+    if save_model:
+        _save_model(trained_model=trained_model, model_name=model_name, save_directory=local_save_directory)
+        
     if task == "classification":
-        y_pred = _evaluate_model_classification(model=trained_model, model_name=model_name, save_dir=save_directory, 
+        y_pred = _evaluate_model_classification(model=trained_model, model_name=model_name, save_dir=local_save_directory, 
                              x_test_scaled=test_features, single_y_test=test_target, target_id=target_id)
     elif task == "regression":
-        y_pred = _evaluate_model_regression(model=trained_model, model_name=model_name, save_dir=save_directory, 
+        y_pred = _evaluate_model_regression(model=trained_model, model_name=model_name, save_dir=local_save_directory, 
                              x_test_scaled=test_features, single_y_test=test_target, target_id=target_id)
     else:
         raise ValueError(f"Unrecognized task '{task}' for model training,")
     if debug:
         print(f"Predicted vector: {type(y_pred)} with shape: {y_pred.shape}")
     
-    get_shap_values(model=trained_model, model_name=model_name, save_dir=save_directory,
+    get_shap_values(model=trained_model, model_name=model_name, save_dir=local_save_directory,
                     features_to_explain=train_features, feature_names=feature_names, target_id=target_id, task=task)
     print("\t...done.")
     return trained_model, y_pred
 
 ###### 5. Execution ######
 def main(datasets_dir: str, save_dir: str, target_columns: list[str], task: Literal["classification", "regression"]="regression",
-         resample_strategy: Literal[r"ADASYN", r'SMOTE', r'RANDOM', r'UNDERSAMPLE', None]=None, 
+         resample_strategy: Literal[r"ADASYN", r'SMOTE', r'RANDOM', r'UNDERSAMPLE', None]=None, save_model: bool=False,
          test_size: float=0.2, debug:bool=False, L1_regularization: float=0.5, L2_regularization: float=0.5, learning_rate: float=0.005, random_state: int=101):
     #Check paths
     _check_paths(datasets_dir, save_dir)
@@ -510,7 +521,7 @@ def main(datasets_dir: str, save_dir: str, target_columns: list[str], task: Lite
                                     train_features=X_train, train_target=y_train,
                                     test_features=X_test, test_target=y_test,
                                     feature_names=feature_names,target_id=target_name,
-                                    debug=debug, save_dir=save_dir)
+                                    debug=debug, save_dir=save_dir, save_model=save_model)
     print("\nTraining and evaluation complete.")
     
     
