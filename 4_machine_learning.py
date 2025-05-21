@@ -241,8 +241,8 @@ def _train_model(model, train_features, train_target):
     return model
 
 # handle local directories
-def _local_directories(model_name: str, dataset_id:str):
-    dataset_dir = os.path.join(MODEL_METRICS_DIR, dataset_id)
+def _local_directories(model_name: str, dataset_id: str, save_dir: str):
+    dataset_dir = os.path.join(save_dir, dataset_id)
     if not os.path.isdir(dataset_dir):
         os.makedirs(dataset_dir)
     
@@ -458,7 +458,7 @@ def get_shap_values(model, model_name: str,
 def train_test_pipeline(model, model_name: str, dataset_id: str, task: Literal["classification", "regression"],
              train_features: np.ndarray, train_target: np.ndarray,
              test_features: np.ndarray, test_target: np.ndarray,
-             feature_names: list[str], target_id: str,
+             feature_names: list[str], target_id: str, save_dir: str,
              debug: bool=False):
     ''' 
     1. Train model.
@@ -471,7 +471,7 @@ def train_test_pipeline(model, model_name: str, dataset_id: str, task: Literal["
     trained_model = _train_model(model=model, train_features=train_features, train_target=train_target)
     if debug:
         print(f"Trained model object: {type(trained_model)}")
-    save_directory = _local_directories(model_name=model_name, dataset_id=dataset_id)
+    save_directory = _local_directories(model_name=model_name, dataset_id=dataset_id, save_dir=save_dir)
     if task == "classification":
         y_pred = _evaluate_model_classification(model=trained_model, model_name=model_name, save_dir=save_directory, 
                              x_test_scaled=test_features, single_y_test=test_target, target_id=target_id)
@@ -489,11 +489,11 @@ def train_test_pipeline(model, model_name: str, dataset_id: str, task: Literal["
     return trained_model, y_pred
 
 ###### 5. Execution ######
-def main(datasets_dir: str, target_columns: list[str], task: Literal["classification", "regression"]="regression",
+def main(datasets_dir: str, save_dir: str, target_columns: list[str], task: Literal["classification", "regression"]="regression",
          resample_strategy: Literal[r"ADASYN", r'SMOTE', r'RANDOM', r'UNDERSAMPLE', None]=None, 
          test_size: float=0.2, debug:bool=False, L1_regularization: float=0.5, L2_regularization: float=0.5, learning_rate: float=0.005, random_state: int=101):
     #Check paths
-    _check_paths(datasets_dir)
+    _check_paths(datasets_dir, save_dir)
     #Yield imputed dataset
     for dataframe, dataframe_name in yield_imputed_dataframe(datasets_dir):
         #Yield features dataframe and target dataframe
@@ -510,20 +510,20 @@ def main(datasets_dir: str, target_columns: list[str], task: Literal["classifica
                                     train_features=X_train, train_target=y_train,
                                     test_features=X_test, test_target=y_test,
                                     feature_names=feature_names,target_id=target_name,
-                                    debug=debug)
+                                    debug=debug, save_dir=save_dir)
     print("\nTraining and evaluation complete.")
     
     
-def _check_paths(datasets_dir: str):
-    if not os.path.isdir(MODEL_METRICS_DIR):
-        os.makedirs(MODEL_METRICS_DIR)   
+def _check_paths(datasets_dir: str, save_dir:str):
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)   
     if not os.path.isdir(datasets_dir):
         raise IOError(f"Datasets directory '{datasets_dir}' not found.\nCheck path or run MICE script first.")
-    return datasets_dir
 
 
 if __name__ == "__main__":
     if not TARGET_COLS:
-        raise ValueError("Fill 'TARGET_COLS' before running this script.")
+        raise ValueError("Fill 'TARGET_COLS' before directly running this script.")
     main(datasets_dir=IMPUTED_DATASETS_DIR,
+         save_dir=MODEL_METRICS_DIR,
          target_columns=TARGET_COLS)
