@@ -163,9 +163,10 @@ def _split_data(features, target, test_size, random_state):
 
 # function to standardize the data
 def _standardize_data(train_features, test_features):
-    scaler = StandardScaler()
-    train_scaled = scaler.fit_transform(train_features)
-    test_scaled = scaler.transform(test_features)
+    global DATASCALER
+    DATASCALER = StandardScaler()
+    train_scaled = DATASCALER.fit_transform(train_features)
+    test_scaled = DATASCALER.transform(test_features)
     return train_scaled, test_scaled
 
 # Over-sample minority class (Positive cases) and return several single target datasets (Classification)
@@ -254,9 +255,9 @@ def _local_directories(model_name: str, dataset_id: str, save_dir: str):
     return model_dir
 
 # save model
-def _save_model(trained_model, model_name: str, save_directory: str):
-    full_path = os.path.join(save_directory, f"{model_name}_model.joblib")
-    joblib.dump(trained_model, full_path)
+def _save_model(trained_model, model_name: str, target_name:str, save_directory: str):
+    full_path = os.path.join(save_directory, f"{model_name}_{target_name}.joblib")
+    joblib.dump({'model': trained_model, 'scaler':DATASCALER}, full_path)
 
 
 # function to evaluate the model and save metrics (Classification)
@@ -481,7 +482,7 @@ def train_test_pipeline(model, model_name: str, dataset_id: str, task: Literal["
     local_save_directory = _local_directories(model_name=model_name, dataset_id=dataset_id, save_dir=save_dir)
     
     if save_model:
-        _save_model(trained_model=trained_model, model_name=model_name, save_directory=local_save_directory)
+        _save_model(trained_model=trained_model, model_name=model_name, target_name=target_id, save_directory=local_save_directory)
         
     if task == "classification":
         y_pred = _evaluate_model_classification(model=trained_model, model_name=model_name, save_dir=local_save_directory, 
