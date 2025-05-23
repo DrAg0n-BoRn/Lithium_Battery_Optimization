@@ -17,7 +17,7 @@ RESULTS_DIR = os.path.join(ROOT_DIR, "results")
 
 MICE_BASE_DIR = os.path.join(RESULTS_DIR, "MICE")
 MICE_IMPUTED_METRICS_DIR = os.path.join(MICE_BASE_DIR, "Distribution Metrics")
-IMPUTED_DATASETS_DIR = os.path.join(MICE_BASE_DIR, "Imputed Datasets")
+MICE_IMPUTED_DATASETS_DIR = os.path.join(MICE_BASE_DIR, "Imputed Datasets")
 
 MODEL_METRICS_DIR = os.path.join(RESULTS_DIR, "Model Metrics")
 
@@ -38,7 +38,7 @@ def make_directories():
               RESULTS_DIR, 
               MICE_BASE_DIR, 
               MICE_IMPUTED_METRICS_DIR, 
-              IMPUTED_DATASETS_DIR,
+              MICE_IMPUTED_DATASETS_DIR,
               MODEL_METRICS_DIR,
               OPTIMIZATION_RESULTS_DIR]:
         os.makedirs(d, exist_ok=True)
