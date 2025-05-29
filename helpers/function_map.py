@@ -1,21 +1,21 @@
 import polars as pl
+import re
 
 
 def coating_material(column: pl.Series) -> pl.Series:
     """
     Binary: present (1) or absent (0) coating material.
     """
-    # check if the value is '无包覆', or '/', or '-' or empty
-    result = column.apply(lambda x: 1 if x is not None and str(x).strip() not in ['无包覆', '/', '-', ''] else 0)
-    result.rename(column.name)
-    return result
+    return column.map_elements(
+        function=lambda x: 1 if x is not None and str(x).strip() not in ['无包覆', '/', '-', ''] else 0,
+        return_dtype=pl.Int8
+    ).alias(column.name)
 
 
 def dopant_element(column: pl.Series) -> pl.DataFrame:
     """
-    One-hot encoding of dopant elements
+    One-hot encoding of dopant elements using Python regex and Polars
     """
-    # list of dopant elements
     dopant_elements = [
         'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
         'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
@@ -33,17 +33,32 @@ def dopant_element(column: pl.Series) -> pl.DataFrame:
         'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og'
     ]
     
+    # Precompile regex patterns using Python re
     pattern_dict = {
-        f"dopant_{element}": rf'(?<![A-Za-z]){element}(?![a-z])' for element in dopant_elements
+        f"dopant_{element}": re.compile(rf"(?<![A-Za-z]){element}(?![a-z])") for element in dopant_elements
     }
-    
-    # create a new dataframe with one-hot encoding
-    df_dopant_raw = pl.DataFrame({element: column.str.contains(pattern).cast(pl.Int8) for element, pattern in pattern_dict.items()})
-    
-    # Drop columns with all zeros (unused elements)
-    df_dopant = df_dopant_raw.select(pl.all().filter(pl.sum() > 0))
-    
+
+    # Apply to each row in the column (a Polars Series) using Python logic
+    def match_row(row_val: str) -> dict:
+        row_val = str(row_val) if row_val is not None else ''
+        return {
+            col_name: int(bool(pattern.search(row_val)))
+            for col_name, pattern in pattern_dict.items()
+        }
+
+    # Map across all values in the column
+    encoded_rows = [match_row(val) for val in column]
+
+    # Convert to Polars DataFrame
+    df_dopant_raw = pl.DataFrame(encoded_rows)
+
+    # Extract columns with sum > 0
+    col_sums = df_dopant_raw.sum()
+    valid_cols = [col for col in col_sums.columns if col_sums[col][0] > 0]
+    df_dopant = df_dopant_raw.select(valid_cols)
+
     return df_dopant
+
 
 
 def crystal_space_group(column: pl.Series) -> pl.DataFrame:
@@ -112,14 +127,14 @@ def primary_particle_size(column: pl.Series) -> pl.Series:
     Transform particle size from nm to um
     """
     # Extract particle size from the column
-    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64, strict=False).alias('particle size')
-    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64, strict=False).alias('particle size')
+    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64, strict=False).alias('primary particle size um')
+    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64, strict=False).alias('primary particle size nm')
     
     # Transform nm to um
     size_col_nm = size_col_nm / 1000.0
     
     # Merge the two columns
-    size_col = (pl.when(size_col_um.is_not_null()).then(size_col_um).otherwise(size_col_nm))
+    size_col = (pl.when(size_col_um.is_not_null()).then(size_col_um).otherwise(size_col_nm).alias('primary particle size'))
     
     #Evaluate expression
     size = pl.select(size_col).to_series()
@@ -134,14 +149,14 @@ def secondary_particle_size(column: pl.Series) -> pl.Series:
     Transform particle size from nm to um
     """
     # Extract particle size from the column
-    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64, strict=False).alias('particle size')
-    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64, strict=False).alias('particle size')
+    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64, strict=False).alias('secondary particle size um')
+    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64, strict=False).alias('secondary particle size nm')
     
     # Transform nm to um
     size_col_nm = size_col_nm / 1000.0
     
     # Merge the two columns
-    size_col = (pl.when(size_col_um.is_not_null()).then(size_col_um).otherwise(size_col_nm))
+    size_col = (pl.when(size_col_um.is_not_null()).then(size_col_um).otherwise(size_col_nm).alias('secondary particle size'))
     
     #Evaluate expression
     size = pl.select(size_col).to_series()
@@ -229,7 +244,7 @@ def precursor_preparation_conditions(column: pl.Series) -> pl.DataFrame:
     temp_col = temp_col_c + 273.15
     
     # Combine the two columns into a dataframe
-    df_combined = pl.concat([ph_col, temp_col], how='horizontal')
+    df_combined = pl.concat([ph_col.to_frame(), temp_col.to_frame()], how='horizontal')
     
     return df_combined
 
@@ -242,28 +257,34 @@ def annealing_temperature(column: pl.Series) -> pl.DataFrame:
     
     Avoid false matches with "hour" values in the column
     """
-    extract_all_temp = column.str.extract_all(r'(?i)(\d+\.?\d*)(?!\s*h|\s*小时)').to_list()
-    cleaned_list_of_lists = [[float(x + 273.15) for x in row] if row else [] for row in extract_all_temp]
-    
-    dataframe_schema = {
-        "annealing temperature 1": list(),
-        "annealing temperature 2": list(),
-        "annealing temperature 3": list(),
+    # Extract all numbers (including possible time-related)
+    all_numbers = column.str.extract_all(r'(?i)(\d+\.?\d*)').to_list()
+
+    # Extract time-related numbers (with h or 小时)
+    time_related = column.str.extract_all(r'(?i)(\d+\.?\d*)\s*(?:h|小时)').to_list()
+
+    # Filter out time-related numbers and convert to Kelvin
+    filtered_numbers = []
+    for nums, times in zip(all_numbers, time_related):
+        nums = nums or []
+        times = times or []
+        temps = [float(x) + 273.15 for x in nums if x not in times]
+        filtered_numbers.append(temps)
+
+    data = {
+        "annealing temperature 1": [],
+        "annealing temperature 2": [],
+        "annealing temperature 3": [],
     }
-    
-    # if a list has more than 3 values, take the first 3. 
-    # If a list has less than 3 values, fill with '-1'.
-    for temp_list in cleaned_list_of_lists:
-        while len(temp_list) < 3:
-            temp_list.append(-1.0)
-        # reshape data for polars dataframe
-        dataframe_schema["annealing temperature 1"].append(temp_list[0])
-        dataframe_schema["annealing temperature 2"].append(temp_list[1])
-        dataframe_schema["annealing temperature 3"].append(temp_list[2])
-    
-    # build dataframe and return it
-    df = pl.DataFrame(dataframe_schema)
-    return df
+
+    for temp_list in filtered_numbers:
+        # Pad with None for missing values
+        padded = temp_list[:3] + [None] * (3 - len(temp_list))
+        data["annealing temperature 1"].append(padded[0])
+        data["annealing temperature 2"].append(padded[1])
+        data["annealing temperature 3"].append(padded[2])
+
+    return pl.DataFrame(data)
 
 
 def annealing_time(column: pl.Series) -> pl.DataFrame:
@@ -272,28 +293,34 @@ def annealing_time(column: pl.Series) -> pl.DataFrame:
     
     Avoid capturing time in other units
     """
-    extract_all_times = column.str.extract_all(r'(?i)(\d+\.?\d*)(?!\s*m|\s*分|\s*°?C)').to_list()
-    cleaned_list_of_lists = [[float(x) for x in row] if row else [] for row in extract_all_times]
-    
-    dataframe_schema = {
-        "annealing time 1": list(),
-        "annealing time 2": list(),
-        "annealing time 3": list(),
+    # Extract all numbers
+    all_numbers = column.str.extract_all(r'(?i)(\d+\.?\d*)').to_list()
+
+    # Extract numbers followed by m (minutes), 分 (minutes), °C (degrees Celsius)
+    excluded_units = column.str.extract_all(r'(?i)(\d+\.?\d*)\s*(?:m|分|°?C)').to_list()
+
+    # Filter out numbers associated with excluded units
+    filtered_times = []
+    for nums, excludes in zip(all_numbers, excluded_units):
+        nums = nums or []
+        excludes = excludes or []
+        times = [float(x) for x in nums if x not in excludes]
+        filtered_times.append(times)
+
+    data = {
+        "annealing time 1": [],
+        "annealing time 2": [],
+        "annealing time 3": [],
     }
-    
-    # if a list has more than 3 values, take the first 3. 
-    # If a list has less than 3 values, fill with '-1'.
-    for time_list in cleaned_list_of_lists:
-        while len(time_list) < 3:
-            time_list.append(-1.0)
-        # reshape data for polars dataframe
-        dataframe_schema["annealing time 1"].append(time_list[0])
-        dataframe_schema["annealing time 2"].append(time_list[1])
-        dataframe_schema["annealing time 3"].append(time_list[2])
-    
-    # build dataframe and return it
-    df = pl.DataFrame(dataframe_schema)
-    return df
+
+    for time_list in filtered_times:
+        # Pad with None instead of -1.0 for missing values
+        padded = time_list[:3] + [None] * (3 - len(time_list))
+        data["annealing time 1"].append(padded[0])
+        data["annealing time 2"].append(padded[1])
+        data["annealing time 3"].append(padded[2])
+
+    return pl.DataFrame(data)
     
 
 def single_poly_crystal(column: pl.Series) -> pl.Series:
@@ -382,17 +409,19 @@ def electrolyte_system(column: pl.Series) -> pl.DataFrame:
     ]
     
     pattern_dict = {
-        f"solvent_{solvent}": rf'(?<![A-Za-z]){solvent}(?![A-Za-z])' for solvent in solvents
+        f"solvent_{solvent}": rf'\b{solvent}\b' for solvent in solvents
     }
     
     # create a new dataframe with one-hot encoding
     df_solvents_raw = pl.DataFrame({solvent: column.str.contains(pattern).cast(pl.Int8) for solvent, pattern in pattern_dict.items()})
     
     # drop columns with all zeros (unused solvents)
-    df_solvents = df_solvents_raw.select(pl.all().filter(pl.sum() > 0))
+    col_sums = df_solvents_raw.sum()
+    valid_cols = [col for col in col_sums.columns if col_sums[col][0] > 0]
+    df_solvents = df_solvents_raw.select(valid_cols)
     
     # merge the series and the dataframe
-    df_combined = pl.concat([mol, electrolyte, df_solvents], how='horizontal')
+    df_combined = pl.concat([mol.to_frame(), electrolyte.to_frame(), df_solvents], how='horizontal')
     
     return df_combined
 
@@ -459,7 +488,7 @@ def capacity_retention(column: pl.Series) -> pl.Series:
     column_percentage_exp = (
         pl.when((column_percentage_raw > 100.0) & (column_percentage_raw < 10000.0)).then(column_percentage_raw / 100.0)
         .when(column_percentage_raw <= 1.0).then(column_percentage_raw * 100.0)
-        .when(column_percentage_raw.is_na()).then(None)
+        .when(column_percentage_raw.is_null()).then(None)
         .otherwise(column_percentage_raw).round(2).cast(pl.Float64, strict=False)
         .alias('capacity retention')
     )
@@ -486,9 +515,9 @@ def first_coulombic(column: pl.Series) -> pl.Series:
     column_percentage_exp = (
         pl.when((column_percentage_raw > 100.0) & (column_percentage_raw < 10000.0)).then(column_percentage_raw / 100.0)
         .when(column_percentage_raw <= 1.0).then(column_percentage_raw * 100.0)
-        .when(column_percentage_raw.is_na()).then(None)
+        .when(column_percentage_raw.is_null()).then(None)
         .otherwise(column_percentage_raw).round(2).cast(pl.Float64, strict=False)
-        .alias('capacity retention')
+        .alias('first coulombic efficiency')
     )
     
     # evaluate expression
@@ -524,12 +553,12 @@ def parse_special_case(df: pl.DataFrame) -> pl.DataFrame:
         # if element_list is None, fill dictionary with 0s
         if element_list is None or len(element_list) == 0:
             for element in one_hot_columns:
-                one_hot_dict[element].append(0)
+                one_hot_dict[element].append(0.0)
             continue
         
         # if molar_ratio_list is None, fill it with as many 1s as the length of element_list
         if molar_ratio_list is None:
-            molar_ratio_list = [1] * len(element_list)
+            molar_ratio_list = [1.0] * len(element_list)
         
         # Ideally sizes should be the same, but in case they are not we use the length of the element_list 
         # and modify values to the molar_ratio_list as needed
@@ -537,21 +566,29 @@ def parse_special_case(df: pl.DataFrame) -> pl.DataFrame:
             molar_ratio_list.pop()
         
         while len(element_list) > len(molar_ratio_list):
-            molar_ratio_list.append(1)
+            molar_ratio_list.append(1.0)
+            
+        # initialize a dict with zero for all elements for this row
+        row_values = {element: 0.0 for element in one_hot_columns}
             
         # populate the dictionary with values based on the presence of elements
         for element, molar_ratio in zip(element_list, molar_ratio_list):
+            new_molar_value = float(molar_ratio)
+            # attempt to fix input value
+            if new_molar_value < 0.0010:
+                continue
             if element in one_hot_columns:
-                one_hot_dict[element].append(molar_ratio)
-        # populate the dictionary with 0s for the rest of the elements
+                row_values[element] = (new_molar_value)
+        # append 1 value to each list of the main dict
         for element in one_hot_columns:
-            if element not in element_list:
-                one_hot_dict[element].append(0)
+            one_hot_dict[element].append(row_values[element])
     
     # create a new dataframe from the dictionary
-    one_hot_df = pl.DataFrame(one_hot_dict)
+    one_hot_df_raw = pl.DataFrame({f"ratio_{k}": pl.Series(k, v, dtype=pl.Float64) for k, v in one_hot_dict.items()})
     # drop columns with all zeros (unused elements)
-    one_hot_df = one_hot_df.select(pl.all().filter(pl.sum() > 0))
+    col_sums = one_hot_df_raw.sum()
+    valid_cols = [col for col in col_sums.columns if col_sums[col][0] > 0]
+    one_hot_df = one_hot_df_raw.select(valid_cols)
 
     return one_hot_df
 
