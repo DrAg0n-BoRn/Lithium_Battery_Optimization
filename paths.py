@@ -15,6 +15,8 @@ RAW_DATA_DIR = os.path.join(ROOT_DIR, "raw_data")
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 RESULTS_DIR = os.path.join(ROOT_DIR, "results")
 
+FEATURE_ENG_DIR = os.path.join(DATA_DIR, "Feature Engineering")
+
 MICE_BASE_DIR = os.path.join(RESULTS_DIR, "MICE")
 MICE_IMPUTED_DATASETS_DIR = os.path.join(MICE_BASE_DIR, "Imputed Datasets")
 
@@ -35,6 +37,7 @@ def make_directories():
     for d in [RAW_DATA_DIR, 
               DATA_DIR, 
               RESULTS_DIR, 
+              FEATURE_ENG_DIR,
               MICE_BASE_DIR, 
               MICE_IMPUTED_DATASETS_DIR,
               MODEL_METRICS_DIR,
