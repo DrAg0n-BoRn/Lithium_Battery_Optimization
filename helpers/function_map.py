@@ -171,12 +171,12 @@ def precursor_type(column: pl.Series) -> pl.DataFrame:
     hydroxide_expr = (
         pl.when(column.str.contains(r'氢氧化物|[Hh]ydroxide')).then(1)
         .otherwise(0)
-        .alias('hydroxide precursor')
+        .alias('precursor_hydroxide')
     )
     carbonate_expr = ( 
         pl.when(column.str.contains(r'碳酸盐|[Cc]arbonate')).then(1)
         .otherwise(0)
-        .alias('carbonate precursor')
+        .alias('precursor_carbonate')
     )
     # Otherwise, if it does not contain "氢氧化物|hydroxide" or "碳酸盐|carbonate", then it is "other"
     # REMOVE DUE TO COLLINEARITY
@@ -200,27 +200,27 @@ def precursor_preparation_method(column: pl.Series) -> pl.DataFrame:
     solid_state_expr = (
         pl.when(column.str.contains(r'固相|(?i)solid[-\s]?state')).then(1)
         .otherwise(0)
-        .alias('solid state precursor preparation method')
+        .alias('precursor_preparation_solid_state')
     )
     sol_gel_expr = (
         pl.when(column.str.contains(r'溶胶|(?i)sol[-\s]?gel')).then(1)
         .otherwise(0)
-        .alias('sol-gel precursor preparation method')
+        .alias('precursor_preparation_sol-gel')
     )
     co_precipitation_expr = (
         pl.when(column.str.contains(r'共沉淀|(?i)co[\s\-]?precipitation')).then(1)
         .otherwise(0)
-        .alias('co-precipitation precursor preparation method')
+        .alias('precursor_preparation_co-precipitation')
     )
     hydrothermal_expr = (
         pl.when(column.str.contains(r'水热|(?i)hydrothermal')).then(1)
         .otherwise(0)
-        .alias('hydrothermal precursor preparation method')
+        .alias('precursor_preparation_hydrothermal')
     )
     mechanical_expr = (
         pl.when(column.str.contains(r'机械|(?i)mechanical')).then(1)
         .otherwise(0)
-        .alias('mechanical precursor preparation method')
+        .alias('precursor_preparation_mechanical')
     )
     
     # evaluate expressions and create a dataframe
@@ -237,9 +237,9 @@ def precursor_preparation_conditions(column: pl.Series) -> pl.DataFrame:
     Transform temperature from Celsius to Kelvin
     """
     # Extract pH from the column
-    ph_col = column.str.extract(r'(?i)pH\D{0,3}(\d+\.?\d*)').cast(pl.Float64, strict=False).alias('precursor pH')
+    ph_col = column.str.extract(r'(?i)pH\D{0,3}(\d+\.?\d*)').cast(pl.Float64, strict=False).alias('precursor_pH')
     # Extract temperature from the column
-    temp_col_c = column.str.extract(r'(\d+\.?\d*)\s?\D?\d*\s?°?\s?[Cc]').cast(pl.Float64, strict=False).alias('precursor temperature')
+    temp_col_c = column.str.extract(r'(\d+\.?\d*)\s?\D?\d*\s?°?\s?[Cc]').cast(pl.Float64, strict=False).alias('precursor_temperature')
     # Convert temperature from Celsius to Kelvin
     temp_col = temp_col_c + 273.15
     
@@ -272,17 +272,17 @@ def annealing_temperature(column: pl.Series) -> pl.DataFrame:
         filtered_numbers.append(temps)
 
     data = {
-        "annealing temperature 1": [],
-        "annealing temperature 2": [],
-        "annealing temperature 3": [],
+        "annealing_temperature_1": [],
+        "annealing_temperature_2": [],
+        "annealing_temperature_3": [],
     }
 
     for temp_list in filtered_numbers:
         # Pad with None for missing values
         padded = temp_list[:3] + [None] * (3 - len(temp_list))
-        data["annealing temperature 1"].append(padded[0])
-        data["annealing temperature 2"].append(padded[1])
-        data["annealing temperature 3"].append(padded[2])
+        data["annealing_temperature_1"].append(padded[0])
+        data["annealing_temperature_2"].append(padded[1])
+        data["annealing_temperature_3"].append(padded[2])
 
     return pl.DataFrame(data)
 
@@ -308,17 +308,17 @@ def annealing_time(column: pl.Series) -> pl.DataFrame:
         filtered_times.append(times)
 
     data = {
-        "annealing time 1": [],
-        "annealing time 2": [],
-        "annealing time 3": [],
+        "annealing_time_1": [],
+        "annealing_time_2": [],
+        "annealing_time_3": [],
     }
 
     for time_list in filtered_times:
         # Pad with None instead of -1.0 for missing values
         padded = time_list[:3] + [None] * (3 - len(time_list))
-        data["annealing time 1"].append(padded[0])
-        data["annealing time 2"].append(padded[1])
-        data["annealing time 3"].append(padded[2])
+        data["annealing_time_1"].append(padded[0])
+        data["annealing_time_2"].append(padded[1])
+        data["annealing_time_3"].append(padded[2])
 
     return pl.DataFrame(data)
     
@@ -350,7 +350,7 @@ def voltage_range(column: pl.Series) -> pl.Series:
     voltage_max = column.str.extract(r'\d+\.?\d*\D+(\d+\.?\d*)').cast(pl.Float64, strict=False)
     
     # get average voltage
-    voltage_avg = ((voltage_min + voltage_max) / 2).fill_null(voltage_min).fill_null(voltage_max).alias("average voltage")
+    voltage_avg = ((voltage_min + voltage_max) / 2).fill_null(voltage_min).fill_null(voltage_max).alias("average_voltage")
     
     return voltage_avg
 
@@ -360,10 +360,10 @@ def electrolyte_system(column: pl.Series) -> pl.DataFrame:
     One-hot encoding of electrolyte system
     """
     # parse electrolyte molarity
-    mol = column.str.extract(r'(\d+\.?\d*)\s?M').cast(pl.Float64, strict=False).alias('electrolyte molarity')
+    mol = column.str.extract(r'(\d+\.?\d*)\s?M').cast(pl.Float64, strict=False).alias('electrolyte_molarity')
     
     # parse electrolyte (Binary: if LiPF6, 1, else 0)
-    electrolyte_expr = (pl.when(column.str.contains(r'LiPF6?')).then(1).otherwise(0).alias('electrolyte LiPF6'))
+    electrolyte_expr = (pl.when(column.str.contains(r'LiPF6?')).then(1).otherwise(0).alias('electrolyte_LiPF6'))
     # evaluate expression
     electrolyte = pl.select(electrolyte_expr).to_series()
     
@@ -443,8 +443,8 @@ def anode_material(column: pl.Series) -> pl.DataFrame:
     graphite = ["石墨", "Graphite", "graphite", "MCMB", "SGC"]
     
     # make 2 new columns: lithium-metal and graphite
-    lithium_metal_col = (pl.when(column.str.contains('|'.join(lithium_metal))).then(1).otherwise(0).alias('anode lithium metal'))
-    graphite_col = (pl.when(column.str.contains('|'.join(graphite))).then(1).otherwise(0).alias('anode graphite'))
+    lithium_metal_col = (pl.when(column.str.contains('|'.join(lithium_metal))).then(1).otherwise(0).alias('anode_lithium_metal'))
+    graphite_col = (pl.when(column.str.contains('|'.join(graphite))).then(1).otherwise(0).alias('anode_graphite'))
     ## if both are 0, then it is assumed to be other anode materials
     
     # create a dataframe and return it (evaluate expressions)
@@ -490,7 +490,7 @@ def capacity_retention(column: pl.Series) -> pl.Series:
         .when(column_percentage_raw <= 1.0).then(column_percentage_raw * 100.0)
         .when(column_percentage_raw.is_null()).then(None)
         .otherwise(column_percentage_raw).round(2).cast(pl.Float64, strict=False)
-        .alias('capacity retention')
+        .alias('capacity_retention')
     )
     
     # evaluate expression
@@ -517,7 +517,7 @@ def first_coulombic(column: pl.Series) -> pl.Series:
         .when(column_percentage_raw <= 1.0).then(column_percentage_raw * 100.0)
         .when(column_percentage_raw.is_null()).then(None)
         .otherwise(column_percentage_raw).round(2).cast(pl.Float64, strict=False)
-        .alias('first coulombic efficiency')
+        .alias('first_coulombic_efficiency')
     )
     
     # evaluate expression
