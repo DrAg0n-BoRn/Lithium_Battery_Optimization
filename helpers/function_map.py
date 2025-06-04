@@ -9,7 +9,7 @@ def coating_material(column: pl.Series) -> pl.Series:
     return column.map_elements(
         function=lambda x: 1 if x is not None and str(x).strip() not in ['无包覆', '/', '-', ''] else 0,
         return_dtype=pl.Int8
-    ).alias(column.name)
+    ).alias("coating_material")
 
 
 def dopant_element(column: pl.Series) -> pl.DataFrame:
@@ -127,14 +127,14 @@ def primary_particle_size(column: pl.Series) -> pl.Series:
     Transform particle size from nm to um
     """
     # Extract particle size from the column
-    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64, strict=False).alias('primary particle size um')
-    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64, strict=False).alias('primary particle size nm')
+    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64, strict=False).alias('size um')
+    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64, strict=False).alias('size nm')
     
     # Transform nm to um
     size_col_nm = size_col_nm / 1000.0
     
     # Merge the two columns
-    size_col = (pl.when(size_col_um.is_not_null()).then(size_col_um).otherwise(size_col_nm).alias('primary particle size'))
+    size_col = (pl.when(size_col_um.is_not_null()).then(size_col_um).otherwise(size_col_nm).alias('particle_size_primary(um)'))
     
     #Evaluate expression
     size = pl.select(size_col).to_series()
@@ -149,14 +149,14 @@ def secondary_particle_size(column: pl.Series) -> pl.Series:
     Transform particle size from nm to um
     """
     # Extract particle size from the column
-    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64, strict=False).alias('secondary particle size um')
-    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64, strict=False).alias('secondary particle size nm')
+    size_col_um = column.str.extract(r'(?i)(\d+\.?\d*)\s?[μu]m').cast(pl.Float64, strict=False).alias('size um')
+    size_col_nm = column.str.extract(r'(?i)(\d+\.?\d*)\s?nm').cast(pl.Float64, strict=False).alias('size nm')
     
     # Transform nm to um
     size_col_nm = size_col_nm / 1000.0
     
     # Merge the two columns
-    size_col = (pl.when(size_col_um.is_not_null()).then(size_col_um).otherwise(size_col_nm).alias('secondary particle size'))
+    size_col = (pl.when(size_col_um.is_not_null()).then(size_col_um).otherwise(size_col_nm).alias('particle_size_secondary(um)'))
     
     #Evaluate expression
     size = pl.select(size_col).to_series()
@@ -257,6 +257,11 @@ def annealing_temperature(column: pl.Series) -> pl.DataFrame:
     
     Avoid false matches with "hour" values in the column
     """
+    # Set column names
+    column_name_1 = "annealing_temperature_1(K)"
+    column_name_2 = "annealing_temperature_2(K)"
+    column_name_3 = "annealing_temperature_3(K)"
+    
     # Extract all numbers (including possible time-related)
     all_numbers = column.str.extract_all(r'(?i)(\d+\.?\d*)').to_list()
 
@@ -270,19 +275,19 @@ def annealing_temperature(column: pl.Series) -> pl.DataFrame:
         times = times or []
         temps = [float(x) + 273.15 for x in nums if x not in times]
         filtered_numbers.append(temps)
-
+        
     data = {
-        "annealing_temperature_1": [],
-        "annealing_temperature_2": [],
-        "annealing_temperature_3": [],
+        column_name_1: [],
+        column_name_2: [],
+        column_name_3: [],
     }
 
     for temp_list in filtered_numbers:
         # Pad with None for missing values
         padded = temp_list[:3] + [None] * (3 - len(temp_list))
-        data["annealing_temperature_1"].append(padded[0])
-        data["annealing_temperature_2"].append(padded[1])
-        data["annealing_temperature_3"].append(padded[2])
+        data[column_name_1].append(padded[0])
+        data[column_name_2].append(padded[1])
+        data[column_name_3].append(padded[2])
 
     return pl.DataFrame(data)
 
@@ -293,6 +298,11 @@ def annealing_time(column: pl.Series) -> pl.DataFrame:
     
     Avoid capturing time in other units
     """
+    # Set column names
+    column_name_1 = "annealing_time_1(hour)"
+    column_name_2 = "annealing_time_2(hour)"
+    column_name_3 = "annealing_time_3(hour)"
+    
     # Extract all numbers
     all_numbers = column.str.extract_all(r'(?i)(\d+\.?\d*)').to_list()
 
@@ -308,17 +318,17 @@ def annealing_time(column: pl.Series) -> pl.DataFrame:
         filtered_times.append(times)
 
     data = {
-        "annealing_time_1": [],
-        "annealing_time_2": [],
-        "annealing_time_3": [],
+        column_name_1: [],
+        column_name_2: [],
+        column_name_3: [],
     }
 
     for time_list in filtered_times:
         # Pad with None instead of -1.0 for missing values
         padded = time_list[:3] + [None] * (3 - len(time_list))
-        data["annealing_time_1"].append(padded[0])
-        data["annealing_time_2"].append(padded[1])
-        data["annealing_time_3"].append(padded[2])
+        data[column_name_1].append(padded[0])
+        data[column_name_2].append(padded[1])
+        data[column_name_3].append(padded[2])
 
     return pl.DataFrame(data)
     
@@ -350,7 +360,7 @@ def voltage_range(column: pl.Series) -> pl.Series:
     voltage_max = column.str.extract(r'\d+\.?\d*\D+(\d+\.?\d*)').cast(pl.Float64, strict=False)
     
     # get average voltage
-    voltage_avg = ((voltage_min + voltage_max) / 2).fill_null(voltage_min).fill_null(voltage_max).alias("average_voltage")
+    voltage_avg = ((voltage_min + voltage_max) / 2).fill_null(voltage_min).fill_null(voltage_max).alias("average_voltage(V)")
     
     return voltage_avg
 
@@ -409,7 +419,7 @@ def electrolyte_system(column: pl.Series) -> pl.DataFrame:
     ]
     
     pattern_dict = {
-        f"solvent_{solvent}": rf'\b{solvent}\b' for solvent in solvents
+        f"solvent_{solvent.strip().replace(" ", "_")}": rf'\b{solvent}\b' for solvent in solvents
     }
     
     # create a new dataframe with one-hot encoding
@@ -464,7 +474,7 @@ def capacity(column: pl.Series) -> pl.Series:
     column_fallback = column.str.extract(r'(\d+\.?\d*)', 1).cast(pl.Float64, strict=False)
     
     # combine the two columns,\. If column_mAh is not null, use it, else use column_fallback
-    result_col_exp = (pl.when(column_mAh.is_not_null()).then(column_mAh).otherwise(column_fallback).cast(pl.Float64).alias('capacity'))
+    result_col_exp = (pl.when(column_mAh.is_not_null()).then(column_mAh).otherwise(column_fallback).cast(pl.Float64).alias('capacity(mAh/g)'))
     
     # evaluate expression
     result_col = pl.select(result_col_exp).to_series()
@@ -490,7 +500,7 @@ def capacity_retention(column: pl.Series) -> pl.Series:
         .when(column_percentage_raw <= 1.0).then(column_percentage_raw * 100.0)
         .when(column_percentage_raw.is_null()).then(None)
         .otherwise(column_percentage_raw).round(2).cast(pl.Float64, strict=False)
-        .alias('capacity_retention')
+        .alias('capacity_retention(%)')
     )
     
     # evaluate expression
@@ -517,7 +527,7 @@ def first_coulombic(column: pl.Series) -> pl.Series:
         .when(column_percentage_raw <= 1.0).then(column_percentage_raw * 100.0)
         .when(column_percentage_raw.is_null()).then(None)
         .otherwise(column_percentage_raw).round(2).cast(pl.Float64, strict=False)
-        .alias('first_coulombic_efficiency')
+        .alias('first_coulombic_efficiency(%)')
     )
     
     # evaluate expression
@@ -584,7 +594,7 @@ def parse_special_case(df: pl.DataFrame) -> pl.DataFrame:
             one_hot_dict[element].append(row_values[element])
     
     # create a new dataframe from the dictionary
-    one_hot_df_raw = pl.DataFrame({f"ratio_{k}": pl.Series(k, v, dtype=pl.Float64) for k, v in one_hot_dict.items()})
+    one_hot_df_raw = pl.DataFrame({f"molar_ratio_{k}": pl.Series(k, v, dtype=pl.Float64) for k, v in one_hot_dict.items()})
     # drop columns with all zeros (unused elements)
     col_sums = one_hot_df_raw.sum()
     valid_cols = [col for col in col_sums.columns if col_sums[col][0] > 0]
