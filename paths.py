@@ -16,6 +16,7 @@ DATA_DIR = os.path.join(ROOT_DIR, "data")
 RESULTS_DIR = os.path.join(ROOT_DIR, "results")
 
 FEATURE_ENG_DIR = os.path.join(DATA_DIR, "Feature Engineering")
+ENGINEERED_CSVS_DIR = os.path.join(DATA_DIR, "Engineered Datasets")
 
 MICE_IMPUTED_DATASETS_DIR = os.path.join(DATA_DIR, "MICE Imputed Datasets")
 MICE_VIF_IMPUTED_DATASETS_DIR = os.path.join(DATA_DIR, "MICE VIF Imputed Datasets")
@@ -29,11 +30,6 @@ OPTIMIZATION_RESULTS_DIR = os.path.join(RESULTS_DIR, "Optimization Results")
 ### Files ###
 RAW_CSV_FILE = os.path.join(DATA_DIR, "start_data.csv")
 PROCESSED_CSV_FILE = os.path.join(DATA_DIR, "preprocessed_data.csv")
-ENGINEERED_CSV_FILE = os.path.join(DATA_DIR, "engineered_data.csv")
-
-
-### Constants ###
-TARGETS = ["capacity(mAh/g)", "capacity_retention(%)", "first_coulombic_efficiency(%)"]
 
 
 
@@ -45,6 +41,7 @@ def make_directories():
               DATA_DIR, 
               RESULTS_DIR, 
               FEATURE_ENG_DIR,
+              ENGINEERED_CSVS_DIR,
               MICE_IMPUTED_DATASETS_DIR,
               MICE_VIF_IMPUTED_DATASETS_DIR,
               MICE_METRICS_DIR, 
