@@ -1,6 +1,6 @@
-.PHONY: all raw_data data_feature_eng imputed_datasets VIF MICE model_metrics optimization
+.PHONY: all raw_data data_feature_eng imputed_datasets VIF MICE model_metrics optimization engineered_csv
 
-all: raw_data data_feature_eng imputed_datasets VIF MICE model_metrics optimization
+all: raw_data data_feature_eng imputed_datasets VIF MICE model_metrics optimization engineered_csv
 
 raw_data:
 	mkdir -p raw_data
@@ -23,3 +23,5 @@ model_metrics:
 optimization:
 	mkdir -p "results/Optimization Results"
 
+engineered_csv:
+	mkdir -p "data/Engineered Datasets"
