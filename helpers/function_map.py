@@ -1,5 +1,7 @@
 import polars as pl
 import re
+from ml_tools.utilities import normalize_mixed_list
+from helpers.constants import TARGETS
 
 
 def coating_material(column: pl.Series) -> pl.Series:
@@ -463,6 +465,7 @@ def anode_material(column: pl.Series) -> pl.DataFrame:
     return df_combined
 
 
+# TARGETS
 def capacity(column: pl.Series) -> pl.Series:
     """
     Target column
@@ -474,7 +477,7 @@ def capacity(column: pl.Series) -> pl.Series:
     column_fallback = column.str.extract(r'(\d+\.?\d*)', 1).cast(pl.Float64, strict=False)
     
     # combine the two columns,\. If column_mAh is not null, use it, else use column_fallback
-    result_col_exp = (pl.when(column_mAh.is_not_null()).then(column_mAh).otherwise(column_fallback).cast(pl.Float64).alias('capacity(mAh/g)'))
+    result_col_exp = (pl.when(column_mAh.is_not_null()).then(column_mAh).otherwise(column_fallback).cast(pl.Float64).alias(TARGETS[0]))
     
     # evaluate expression
     result_col = pl.select(result_col_exp).to_series()
@@ -500,7 +503,7 @@ def capacity_retention(column: pl.Series) -> pl.Series:
         .when(column_percentage_raw <= 1.0).then(column_percentage_raw * 100.0)
         .when(column_percentage_raw.is_null()).then(None)
         .otherwise(column_percentage_raw).round(2).cast(pl.Float64, strict=False)
-        .alias('capacity_retention(%)')
+        .alias(TARGETS[1])
     )
     
     # evaluate expression
@@ -527,7 +530,7 @@ def first_coulombic(column: pl.Series) -> pl.Series:
         .when(column_percentage_raw <= 1.0).then(column_percentage_raw * 100.0)
         .when(column_percentage_raw.is_null()).then(None)
         .otherwise(column_percentage_raw).round(2).cast(pl.Float64, strict=False)
-        .alias('first_coulombic_efficiency(%)')
+        .alias(TARGETS[2])
     )
     
     # evaluate expression
@@ -536,6 +539,7 @@ def first_coulombic(column: pl.Series) -> pl.Series:
     return column_percentage
 
 
+# Special case
 def parse_special_case(df: pl.DataFrame) -> pl.DataFrame:
     """
     Parse "element composition" and "molar ratio" then one hot encode them and return a dataframe.
@@ -566,9 +570,9 @@ def parse_special_case(df: pl.DataFrame) -> pl.DataFrame:
                 one_hot_dict[element].append(0.0)
             continue
         
-        # if molar_ratio_list is None, fill it with as many 1s as the length of element_list
+        # if molar_ratio_list is None, fill it with as many 0 as the length of element_list
         if molar_ratio_list is None:
-            molar_ratio_list = [1.0] * len(element_list)
+            molar_ratio_list = [0.0] * len(element_list)
         
         # Ideally sizes should be the same, but in case they are not we use the length of the element_list 
         # and modify values to the molar_ratio_list as needed
@@ -576,19 +580,18 @@ def parse_special_case(df: pl.DataFrame) -> pl.DataFrame:
             molar_ratio_list.pop()
         
         while len(element_list) > len(molar_ratio_list):
-            molar_ratio_list.append(1.0)
+            molar_ratio_list.append(0.0)
             
         # initialize a dict with zero for all elements for this row
         row_values = {element: 0.0 for element in one_hot_columns}
-            
+        
+        #### Normalize molar ratios ###
+        molar_ratio_list = normalize_mixed_list(data=molar_ratio_list, threshold=2)
+        
         # populate the dictionary with values based on the presence of elements
         for element, molar_ratio in zip(element_list, molar_ratio_list):
-            new_molar_value = float(molar_ratio)
-            # attempt to fix input value
-            if new_molar_value < 0.0010:
-                continue
             if element in one_hot_columns:
-                row_values[element] = (new_molar_value)
+                row_values[element] = (molar_ratio)
         # append 1 value to each list of the main dict
         for element in one_hot_columns:
             one_hot_dict[element].append(row_values[element])
@@ -601,7 +604,6 @@ def parse_special_case(df: pl.DataFrame) -> pl.DataFrame:
     one_hot_df = one_hot_df_raw.select(valid_cols)
 
     return one_hot_df
-
 
 
 ### Distribute rules to the columns
