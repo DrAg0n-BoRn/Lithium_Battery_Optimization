@@ -334,4 +334,4 @@ dependencies:
   - zstandard=0.23.0
   - zstd=1.5.7
   - pip:
-      - dragon-ml-toolbox>=1.4.7
+      - dragon-ml-toolbox==1.4.7
