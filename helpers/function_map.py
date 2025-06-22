@@ -73,11 +73,11 @@ def crystal_space_group(column: pl.Series) -> pl.DataFrame:
               "R-3m+C2/m-mix", 
               "R-3m+Fd-3m-mix", 
               "R-3m+C2/m+Fd-3m-mix",
-              "Hexagonal", 
-              "Orthorhombic", 
-              "Cubic",
-              "Monoclinic", 
-              "Triclinic"]
+              "hexagonal", 
+              "orthorhombic", 
+              "cubic",
+              "monoclinic", 
+              "triclinic"]
     
     groups_dict = {group : list() for group in groups}
     
