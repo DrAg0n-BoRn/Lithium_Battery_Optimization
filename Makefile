@@ -1,27 +1,29 @@
-.PHONY: all raw_data data_feature_eng imputed_datasets VIF MICE model_metrics optimization engineered_csv
+.PHONY: all logs raw_data feature_eng MICE VIF model_metrics optimization
 
-all: raw_data data_feature_eng imputed_datasets VIF MICE model_metrics optimization engineered_csv
+all: logs raw_data feature_eng MICE VIF model_metrics optimization
+
+logs:
+	mkdir -p Logs
 
 raw_data:
 	mkdir -p raw_data
 
-data_feature_eng:
+feature_eng:
 	mkdir -p "data/Feature Engineering"
-
-imputed_datasets:
-	mkdir -p "data/MICE Imputed Datasets"
-
-VIF:
-	mkdir -p "data/MICE VIF Imputed Datasets"
+	mkdir -p "data/Engineered Datasets"
 
 MICE:
-	mkdir -p "results/MICE"
+	mkdir -p "data/MICE Imputed Datasets"
+	mkdir -p "results/MICE Metrics"
+
+VIF:
+	mkdir -p "data/VIF Imputed Datasets"
+	mkdir -p "results/VIF Metrics"
 
 model_metrics:
+	mkdir -p "data/Train Datasets"
 	mkdir -p "results/Model Metrics"
 
 optimization:
+	mkdir -p "data/Optimization Models"
 	mkdir -p "results/Optimization Results"
-
-engineered_csv:
-	mkdir -p "data/Engineered Datasets"
