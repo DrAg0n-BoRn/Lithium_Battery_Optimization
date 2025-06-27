@@ -1,4 +1,4 @@
-from ml_tools.particle_swarm_optimization import run_pso, multiple_objective_functions_from_dir
+from ml_tools.PSO_optimization import run_pso, multiple_objective_functions_from_dir
 from ml_tools.utilities import deserialize_object
 from paths import OPTIMIZATION_RESULTS_DIR, OPTIMIZATION_MODELS_DIR, DATA_DIR
 import os
@@ -30,9 +30,8 @@ def main():
                 save_results_dir=OPTIMIZATION_RESULTS_DIR,
                 auto_binary_boundaries=True,
                 swarm_size=200,
-                max_iterations=2,
-                post_hoc_analysis=2,
-                workers=1)
+                max_iterations=5000,
+                post_hoc_analysis=10)
 
 
 if __name__ == "__main__":
