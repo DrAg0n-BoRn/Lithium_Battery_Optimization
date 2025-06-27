@@ -187,4 +187,6 @@ zipp==3.22.0
 zstandard==0.23.0
 et_xmlfile==2.0.0
 openpyxl==3.1.5
-dragon-ml-toolbox==1.4.7
+dragon-ml-toolbox==2.1.0
+torch==2.7.1
+torchvision==0.22.1
