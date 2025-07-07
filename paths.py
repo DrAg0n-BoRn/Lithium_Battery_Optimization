@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 import sys
 
 
@@ -11,53 +10,51 @@ if str(ROOT_DIR) not in sys.path:
 
 
 ### Directories ###
-RAW_DATA_DIR = os.path.join(ROOT_DIR, "raw_data")
-DATA_DIR = os.path.join(ROOT_DIR, "data")
-RESULTS_DIR = os.path.join(ROOT_DIR, "results")
-LOGS_DIR = os.path.join(ROOT_DIR, "Logs")
+RAW_DATA_DIR = ROOT_DIR / "raw_data"
+DATA_DIR = ROOT_DIR / "data"
+RESULTS_DIR = ROOT_DIR / "results"
+LOGS_DIR = ROOT_DIR / "Logs"
 
-FEATURE_ENG_DIR = os.path.join(DATA_DIR, "Feature Engineering")
-ENGINEERED_CSVS_DIR = os.path.join(DATA_DIR, "Engineered Datasets")
+FEATURE_ENG_METRICS_DIR = DATA_DIR / "Feature Engineering"
+FEATURE_ENG_DATASETS_DIR = DATA_DIR / "Feature Eng Datasets"
 
-MICE_IMPUTED_DATASETS_DIR = os.path.join(DATA_DIR, "MICE Imputed Datasets")
-MICE_METRICS_DIR = os.path.join(RESULTS_DIR, "MICE Metrics")
+MICE_DATASETS_DIR = DATA_DIR / "MICE Datasets"
+MICE_METRICS_DIR = RESULTS_DIR / "MICE Metrics"
 
-VIF_IMPUTED_DATASETS_DIR = os.path.join(DATA_DIR, "VIF Imputed Datasets")
-VIF_METRICS_DIR = os.path.join(RESULTS_DIR, "VIF Metrics")
+VIF_DATASETS_DIR = DATA_DIR / "VIF Datasets"
+VIF_METRICS_DIR = RESULTS_DIR / "VIF Metrics"
 
-TRAIN_DATASETS_DIR = os.path.join(DATA_DIR, "Train Datasets")
-MODEL_METRICS_DIR = os.path.join(RESULTS_DIR, "Model Metrics")
+TRAIN_DATASETS_DIR = DATA_DIR / "Train Datasets"
+ENSEMBLE_RESULTS_DIR = RESULTS_DIR / "Model Metrics"
 
-OPTIMIZATION_MODELS_DIR = os.path.join(DATA_DIR, "Optimization Models")
-OPTIMIZATION_RESULTS_DIR = os.path.join(RESULTS_DIR, "Optimization Results")
+OPTIMIZATION_MODELS_DIR = DATA_DIR / "Optimization Models"
+OPTIMIZATION_RESULTS_DIR = RESULTS_DIR / "Optimization Results"
 
 
 ### Files ###
-RAW_CSV_FILE = os.path.join(DATA_DIR, "start_data.csv")
-PROCESSED_CSV_FILE = os.path.join(DATA_DIR, "preprocessed_data.csv")
+RAW_CSV_FILE = RAW_DATA_DIR / "raw_data.csv"
+CLEANED_CSV_FILE = DATA_DIR / "cleaned_data.csv"
 
 
 def make_directories():
     """
     Creates directories if they do not exist
     """
-    for d in [RAW_DATA_DIR, 
-              DATA_DIR, 
+    for dir in [ DATA_DIR, 
               RESULTS_DIR, 
               LOGS_DIR,
-              FEATURE_ENG_DIR,
-              ENGINEERED_CSVS_DIR,
-              MICE_IMPUTED_DATASETS_DIR,
+              FEATURE_ENG_METRICS_DIR,
+              FEATURE_ENG_DATASETS_DIR,
+              MICE_DATASETS_DIR,
               MICE_METRICS_DIR,
-              VIF_IMPUTED_DATASETS_DIR,
+              VIF_DATASETS_DIR,
               VIF_METRICS_DIR,
               TRAIN_DATASETS_DIR,
-              MODEL_METRICS_DIR,
+              ENSEMBLE_RESULTS_DIR,
               OPTIMIZATION_MODELS_DIR,
               OPTIMIZATION_RESULTS_DIR]:
-        os.makedirs(d, exist_ok=True)
+        dir.mkdir(parents=True, exist_ok=True)
 
 
 if __name__ == "__main__":
-    # make directories if they do not exist
     make_directories()
