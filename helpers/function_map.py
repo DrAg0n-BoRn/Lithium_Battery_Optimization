@@ -2,16 +2,39 @@ import polars as pl
 import re
 from ml_tools.utilities import normalize_mixed_list
 from helpers.constants import TARGETS
+from ml_tools.ETL_engineering import (TransformationRecipe,
+                                      BinaryTransformer,
+                                      KeywordDummifier,
+                                      NumberExtractor,
+                                      MultiNumberExtractor,
+                                      RatioCalculator,
+                                      CategoryMapper,
+                                      RegexMapper,
+                                      ValueBinner)
 
 
-def coating_material(column: pl.Series) -> pl.Series:
-    """
-    Binary: present (1) or absent (0) coating material.
-    """
-    return column.map_elements(
-        function=lambda x: 1 if x is not None and str(x).strip() not in ['无包覆', '/', '-', ''] else 0,
-        return_dtype=pl.Int8
-    ).alias("coating_material")
+### Define recipe
+TRANSFORMATION_RECIPE = TransformationRecipe()
+
+
+### coating material
+# Binary: present (1) or absent (0)
+coating_material_transformer = BinaryTransformer(
+    false_keywords = ['无包覆', '/', '-',]
+)
+
+TRANSFORMATION_RECIPE.add(
+    input_col_name = "coating material",
+    output_col_names = "coating_material",
+    transform = coating_material_transformer
+)
+
+### dopant element
+# One-hot encoding of dopant elements
+dopant_element_transformer = KeywordDummifier()
+
+
+
 
 
 def dopant_element(column: pl.Series) -> pl.DataFrame:
