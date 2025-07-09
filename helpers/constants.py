@@ -14,6 +14,7 @@ RAW_COLUMNS = [
     "single crystal or polycrystalline",
     "voltage range",
     "electrolyte system	capacity",
+    "capacity",
     "cycles", 
     "capacity retention",
     "first Coulombic efficiency",
@@ -25,5 +26,3 @@ TARGETS = [
     "capacity_retention(%)", 
     "first_coulombic_efficiency(%)"
 ]
-
-
