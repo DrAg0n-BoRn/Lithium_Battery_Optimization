@@ -29,6 +29,7 @@ ENSEMBLE_RESULTS_DIR = RESULTS_DIR / "Model Metrics"
 
 OPTIMIZATION_MODELS_DIR = DATA_DIR / "Optimization Models"
 OPTIMIZATION_RESULTS_DIR = RESULTS_DIR / "Optimization Results"
+OPTIMIZATION_PLOTS_DIR = OPTIMIZATION_RESULTS_DIR / "Plots"
 
 SERIALIZED_OBJECTS_DIR = DATA_DIR / "Serialized Objects"
 
@@ -59,7 +60,8 @@ def make_directories():
                 ENSEMBLE_RESULTS_DIR,
                 OPTIMIZATION_MODELS_DIR,
                 OPTIMIZATION_RESULTS_DIR,
-                SERIALIZED_OBJECTS_DIR]:
+                SERIALIZED_OBJECTS_DIR,
+                OPTIMIZATION_PLOTS_DIR]:
         dir.mkdir(parents=True, exist_ok=True)
 
 
