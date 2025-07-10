@@ -27,7 +27,7 @@ TRANSFORMATION_RECIPE.add(
 
 
 ### dopant element
-# One-hot encoding of dopant elements
+# Multi-binary encoding of dopant elements
 _dopant_elements = [
         'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
         'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
@@ -469,7 +469,7 @@ solvent_transformer = MultiBinaryDummifier(
 
 TRANSFORMATION_RECIPE.add(
     input_col_name="electrolyte system",
-    output_col_names=[f"solvent_{solvent}" for solvent in solvent_transformer.keywords],
+    output_col_names=[f"solvent_{solvent.replace(" ", "_")}" for solvent in solvent_transformer.keywords],
     transform=solvent_transformer
 )
 
