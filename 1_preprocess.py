@@ -10,7 +10,7 @@ def process_data() -> None:
     """
     data_processor = DataProcessor(TRANSFORMATION_RECIPE)
     
-    df_cleaned = load_dataframe(df_path=CLEANED_CSV_FILE, kind="polars", all_strings=True)
+    df_cleaned, _ = load_dataframe(df_path=CLEANED_CSV_FILE, kind="polars", all_strings=True)
     
     df_processed = data_processor.transform(df=df_cleaned) # type: ignore
     

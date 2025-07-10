@@ -1,6 +1,6 @@
 from ml_tools.PSO_optimization import run_pso, multiple_objective_functions_from_dir, plot_optimal_feature_distributions
 from ml_tools.utilities import deserialize_object
-from paths import OPTIMIZATION_RESULTS_DIR, OPTIMIZATION_MODELS_DIR, SERIALIZED_CONTINUOUS_FILE, SERIALIZED_BINARY_FILE
+from paths import OPTIMIZATION_RESULTS_DIR, OPTIMIZATION_MODELS_DIR, SERIALIZED_CONTINUOUS_FILE, SERIALIZED_BINARY_FILE, OPTIMIZATION_PLOTS_DIR
 
 
 def main():
@@ -35,7 +35,7 @@ def main():
 
 def make_plots():
     plot_optimal_feature_distributions(results_dir=OPTIMIZATION_RESULTS_DIR,
-                                       save_dir=OPTIMIZATION_RESULTS_DIR)
+                                       save_dir=OPTIMIZATION_PLOTS_DIR)
 
 
 if __name__ == "__main__":
