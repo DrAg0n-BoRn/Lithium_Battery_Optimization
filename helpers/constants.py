@@ -13,7 +13,7 @@ RAW_COLUMNS = [
     "annealing time", 
     "single crystal or polycrystalline",
     "voltage range",
-    "electrolyte system	capacity",
+    "electrolyte system",
     "capacity",
     "cycles", 
     "capacity retention",
