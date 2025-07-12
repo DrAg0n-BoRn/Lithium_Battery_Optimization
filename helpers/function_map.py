@@ -125,7 +125,7 @@ def crystal_space_group_transformer(column: pl.Series) -> pl.DataFrame:
 
 TRANSFORMATION_RECIPE.add(
     input_col_name="crystal space group",
-    output_col_names=_crystal_space_groups,
+    output_col_names=[f"crystal_{space_group}" for space_group in _crystal_space_groups],
     transform=crystal_space_group_transformer
 )
 
