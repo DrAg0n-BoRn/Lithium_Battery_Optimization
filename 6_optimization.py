@@ -25,10 +25,11 @@ def main():
                 upper_boundaries=upper_boundaries,
                 objective_function=objective_func,
                 save_results_dir=OPTIMIZATION_RESULTS_DIR,
+                save_format="both",
                 auto_binary_boundaries=True,
-                swarm_size=500,
-                max_iterations=6000,
-                post_hoc_analysis=20)
+                swarm_size=200,
+                max_iterations=5000,
+                post_hoc_analysis=1)
 
 
 def make_plots():
