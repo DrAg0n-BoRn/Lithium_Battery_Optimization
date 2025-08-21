@@ -9,3 +9,5 @@
 <a href="https://www.flaticon.com/free-icons/logic" title="logic icons">Logic icons created by noomtah - Flaticon</a>
 
 <a href="https://www.flaticon.com/free-icons/drones" title="drones icons">Drones icons created by VastDrone - Flaticon</a>
+
+<a href="https://www.flaticon.com/free-icons/database" title="database icons">Database icons created by Freepik - Flaticon</a>
