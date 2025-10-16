@@ -1,69 +1,43 @@
-from pathlib import Path
-import sys
+from ml_tools.path_manager import PathManager
 
+# 1. Initialize the PathManager using this file as the anchor, adding base directories.
+PM = PathManager(
+    anchor_file=__file__,
+    base_directories=["helpers", "clean_data", "data", "results", "logs"]
+)
 
-# set root directory
-ROOT_DIR = Path(__file__).resolve().parent
-# Add the root directory to the system path
-if str(ROOT_DIR) not in sys.path:
-    sys.path.append(str(ROOT_DIR))
+# 2. Define directories and files.
+# 2.1 📁 Directories
+PM.feature_engineering = PM.data / "Feature Engineering"
+PM.feature_engineering_metrics = PM.results / "Feature Engineering Metrics"
+PM.mice_datasets = PM.data / "MICE Datasets"
+PM.mice_metrics = PM.results / "MICE Metrics"
+PM.vif_datasets = PM.data / "VIF Datasets"
+PM.vif_metrics = PM.results / "VIF Metrics"
+PM.train_datasets = PM.data / "Train Datasets"
+PM.train_metrics = PM.results / "Train Metrics"
+# Optimization
+PM.optimization_engineering = PM.data / "Optimization Engineering"
+PM.optimization_engineering_metrics = PM.results / "Optimization Engineering Metrics"
+PM.optimization_train_metrics = PM.results / "Optimization Train Metrics"
+PM.optimization_results = PM.results / "Optimization Results"
 
+# 2.2 📁 Subdirectories
+PM.feature_engineering_unclip = PM.feature_engineering / "Feature Engineering Unclip"
+PM.feature_engineering_clip = PM.feature_engineering / "Feature Engineering Clip"
 
-### Directories ###
-RAW_DATA_DIR = ROOT_DIR / "raw_data"
-DATA_DIR = ROOT_DIR / "data"
-RESULTS_DIR = ROOT_DIR / "results"
-LOGS_DIR = ROOT_DIR / "Logs"
+# 2.3 📄 Files
+PM.clean_data_file = PM.clean_data / "clean_data.csv"
+PM.processed_data_file = PM.data / "processed_data.csv"
+PM.unclip_data_file = PM.feature_engineering_unclip / "engineered_data_unclip.csv"
+PM.clip_data_file = PM.feature_engineering_clip / "engineered_data_clip.csv"
+PM.binary_columns_file = PM.feature_engineering / "BINARY_COLUMNS_list.joblib"
+PM.continuous_columns_file = PM.feature_engineering / "CONTINUOUS_COLUMNS_list.joblib"
+# Optimization
+PM.optimization_binary_columns_file = PM.optimization_engineering / "BINARY_COLUMNS_list.joblib"
+PM.optimization_continuous_columns_file = PM.optimization_engineering / "CONTINUOUS_COLUMNS_list.joblib"
 
-FEATURE_ENG_METRICS_DIR = DATA_DIR / "Feature Engineering"
-FEATURE_ENG_DATASETS_DIR = DATA_DIR / "Feature Eng Datasets"
-
-MICE_DATASETS_DIR = DATA_DIR / "MICE Datasets"
-MICE_METRICS_DIR = RESULTS_DIR / "MICE Metrics"
-
-VIF_DATASETS_DIR = DATA_DIR / "VIF Datasets"
-VIF_METRICS_DIR = RESULTS_DIR / "VIF Metrics"
-
-TRAIN_DATASETS_DIR = DATA_DIR / "Train Datasets"
-ENSEMBLE_RESULTS_DIR = RESULTS_DIR / "Model Metrics"
-
-OPTIMIZATION_MODELS_DIR = DATA_DIR / "Optimization Models"
-OPTIMIZATION_RESULTS_DIR = RESULTS_DIR / "Optimization Results"
-OPTIMIZATION_PLOTS_DIR = OPTIMIZATION_RESULTS_DIR / "Plots"
-
-SERIALIZED_OBJECTS_DIR = DATA_DIR / "Serialized Objects"
-
-### Files ###
-RAW_CSV_FILE = RAW_DATA_DIR / "raw_data.csv"
-CLEANED_CSV_FILE = DATA_DIR / "cleaned_data.csv"
-PROCESSED_CSV_FILE = DATA_DIR / "processed_data.csv"
-SERIALIZED_CONTINUOUS_FILE = SERIALIZED_OBJECTS_DIR / "CONT_FEATURES_VALUE_RANGE_dict.joblib"
-SERIALIZED_BINARY_FILE = SERIALIZED_OBJECTS_DIR / "BINARY_COLUMNS_list.joblib"
-SERIALIZED_TARGETS_FILE = SERIALIZED_OBJECTS_DIR / "TARGETS_VALUE_RANGE_dict.joblib"
-
-
-def make_directories():
-    """
-    Creates directories if they do not exist
-    """
-    for dir in [RAW_DATA_DIR,
-                DATA_DIR, 
-                RESULTS_DIR, 
-                LOGS_DIR,
-                FEATURE_ENG_METRICS_DIR,
-                FEATURE_ENG_DATASETS_DIR,
-                MICE_DATASETS_DIR,
-                MICE_METRICS_DIR,
-                VIF_DATASETS_DIR,
-                VIF_METRICS_DIR,
-                TRAIN_DATASETS_DIR,
-                ENSEMBLE_RESULTS_DIR,
-                OPTIMIZATION_MODELS_DIR,
-                OPTIMIZATION_RESULTS_DIR,
-                SERIALIZED_OBJECTS_DIR,
-                OPTIMIZATION_PLOTS_DIR]:
-        dir.mkdir(parents=True, exist_ok=True)
-
-
+# 3. 🛠️ Make directories and check status
 if __name__ == "__main__":
-    make_directories()
+    PM.make_dirs()
+    PM.status()
