@@ -1,8 +1,11 @@
 .vscode
+clean_data/
 raw_data
 data 
 results 
 __pycache__
 .DS_Store
 test.py 
-Logs
+logs
+test.ipynb 
+backups/
