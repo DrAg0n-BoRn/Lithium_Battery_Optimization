@@ -4,7 +4,7 @@ from ml_tools.schema import FeatureSchema
 from ml_tools.ML_models_advanced import DragonNodeModel
 from ml_tools.ML_utilities import ArtifactFinder
 
-from helpers.constants import CONTINUOUS_FEATURES_RANGE, TARGET_capacity, TARGET_capacity_retention, TARGET_first_coulombic_eff
+from helpers.constants import CONTINUOUS_OPTIMIZATION_RANGE, CONTINUOUS_INTEGER_FEATURES, TARGET_capacity, TARGET_capacity_retention, TARGET_first_coulombic_eff
 from paths import PM
 
 
@@ -37,13 +37,13 @@ optimizer = DragonParetoOptimizer(
     inference_handler=inference_handler,
     schema=feature_schema,
     target_objectives=objectives, # type: ignore
-    continuous_bounds_map=CONTINUOUS_FEATURES_RANGE,
+    continuous_bounds_map=CONTINUOUS_OPTIMIZATION_RANGE,
     population_size=500,
 )
 
 # Run optimization
 optimizer.run(
-    generations=700,
+    generations=1000,
     save_dir=PM.optimization_results
 )
 
@@ -51,3 +51,6 @@ optimizer.run(
 optimizer.plot_pareto_3d(x_target=TARGET_capacity,
                          y_target=TARGET_capacity_retention,
                          z_target=TARGET_first_coulombic_eff)
+
+# Save solutions to CSV
+optimizer.save_solutions(columns_to_round=CONTINUOUS_INTEGER_FEATURES, save_to_sql=True)
