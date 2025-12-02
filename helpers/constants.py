@@ -71,7 +71,7 @@ CONTINUOUS_OPTIMIZATION_RANGE = {
     'Annealing Time 2(h)': (10, 24),
     'Minimum Voltage(V)': (1.0, 3.5),
     'Maximum Voltage(V)': (3.7, 5.0),
-    'Cycles': (10, 3500)
+    'Cycles': (100, 2000)
 }
 
 CONTINUOUS_INTEGER_FEATURES = [
