@@ -53,4 +53,4 @@ optimizer.plot_pareto_3d(x_target=TARGET_capacity,
                          z_target=TARGET_first_coulombic_eff)
 
 # Save solutions to CSV
-optimizer.save_solutions(columns_to_round=CONTINUOUS_INTEGER_FEATURES, save_to_sql=True)
+optimizer.save_solutions(columns_to_round=CONTINUOUS_INTEGER_FEATURES, save_to_sql=False)
