@@ -30,13 +30,16 @@ TRANSFORMATION_RECIPE.add(
 )
 
 ### 3. dopant element
-# Multi-binary encoding of dopant elements
+# Multi-binary encoding of dopant elements using \b to avoid substring matching
+regex_elements = [fr"\b{element}\b" for element in CHEMICAL_ELEMENT_SYMBOLS]
+
 TRANSFORMATION_RECIPE.add(
     input_col_name = "dopant element",
     output_col_names="Dopant",
     transform=MultiBinaryDummifier(
-        keywords=CHEMICAL_ELEMENT_SYMBOLS,
-        case_insensitive=False
+        keywords=regex_elements,
+        case_insensitive=False,
+        use_regex=True
     )
 )
 
@@ -211,7 +214,7 @@ TRANSFORMATION_RECIPE.add(
 
 # Step 2: Multiple Binary encoding of solvents
 _solvent_list = [
-    # "EC",  # Ethylene carbonate
+    "EC",  # Ethylene carbonate
     "DMC", # Dimethyl carbonate
     "EMC", # Ethyl methyl carbonate
     "DEC", # Diethyl carbonate
@@ -234,10 +237,10 @@ _solvent_list = [
     "ethanol",
     "isopropanol",
     "butanol",
-    "ethyl acetate",
-    "methyl acetate",
-    "butyl acetate",
-    "diethyl ether",
+    "ethyl",
+    "methyl",
+    "butyl",
+    "diethyl",
     "chloroform",
     "dichloromethane",
     "toluene",
@@ -249,12 +252,16 @@ _solvent_list = [
     "water"
 ]
 
+# use regex word boundaries to avoid substring matching issues
+regex_solvents = [fr"\b{solvent}\b" for solvent in _solvent_list]
+
 TRANSFORMATION_RECIPE.add(
     input_col_name="electrolyte system",
     output_col_names="Electrolyte Solvent",
     transform=MultiBinaryDummifier(
-        keywords = _solvent_list,
-        case_insensitive=False
+        keywords = regex_solvents,
+        case_insensitive=True,
+        use_regex=True
     )
 )
 
