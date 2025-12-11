@@ -9,3 +9,4 @@ test.py
 logs
 test.ipynb 
 backups/
+.venv/
