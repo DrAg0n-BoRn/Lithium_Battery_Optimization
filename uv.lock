@@ -336,11 +336,11 @@ wheels = [
 
 [[package]]
 name = "dragon-ml-toolbox"
-version = "19.2.4"
+version = "19.4.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/62/d3/a69e859b4778ffef4a0bf7e60943c9791c9bbe629d620c2277dc99cb5835/dragon_ml_toolbox-19.2.4.tar.gz", hash = "sha256:446895769ea20cdc8fea27b52e7da68dfda15edd82beb0fd3430c92db7e4d981", size = 280337, upload-time = "2025-12-11T07:40:04.813Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cb/d7/13987eae154fce1203a02cb312ee0390c4ad19d9dc12d5ba477dee46bc96/dragon_ml_toolbox-19.4.0.tar.gz", hash = "sha256:f56d9e305cc627d7bc003eb8bf990307d8ff4aaf29e385e2a2641901602cebfc", size = 281659, upload-time = "2025-12-12T13:04:45.563Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/78/8e7c5be84d940a830d073a53116049fde6d75ad7b020b13be1d07cde29fd/dragon_ml_toolbox-19.2.4-py3-none-any.whl", hash = "sha256:af693ceee64a6dbc9fb7ac3ff76a0169939b65b35b975fcd66f897db1d3208a1", size = 323327, upload-time = "2025-12-11T07:40:02.563Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/8d/6063075647fc4d694fe72bb76820d68fd87ffdae1f43d2e22e6f8a342213/dragon_ml_toolbox-19.4.0-py3-none-any.whl", hash = "sha256:dd118dea3d23dc5b591a2cfdf79e547ab7a0b039543d45167494c40cc80d7740", size = 328907, upload-time = "2025-12-12T13:04:43.679Z" },
 ]
 
 [package.optional-dependencies]
@@ -903,7 +903,7 @@ wheels = [
 
 [[package]]
 name = "lithiumbatterydesign"
-version = "2.0.0"
+version = "2.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "dragon-ml-toolbox", extra = ["ml"] },
@@ -918,7 +918,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dragon-ml-toolbox", extras = ["ml"], specifier = ">=19.2.4" },
+    { name = "dragon-ml-toolbox", extras = ["ml"], specifier = ">=19.4.0" },
     { name = "torch", specifier = ">=2.9.1" },
     { name = "torchvision", specifier = ">=0.24.1" },
 ]

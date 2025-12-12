@@ -1,11 +1,11 @@
 [project]
 name = "LithiumBatteryDesign"
-version = "2.0.0"
+version = "2.1.0"
 description = "AI powered tool for designing lithium-ion batteries."
 readme = "README.md"
 requires-python = "==3.12.*"
 dependencies = [
-    "dragon-ml-toolbox[ml]>=19.2.4",
+    "dragon-ml-toolbox[ml]>=19.4.0",
     "torch>=2.9.1",
     "torchvision>=0.24.1",
 ]
