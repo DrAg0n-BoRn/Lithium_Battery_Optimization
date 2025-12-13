@@ -5,7 +5,7 @@ description = "AI powered tool for designing lithium-ion batteries."
 readme = "README.md"
 requires-python = "==3.12.*"
 dependencies = [
-    "dragon-ml-toolbox[ml]>=19.4.0",
+    "dragon-ml-toolbox[ml]==19.5.0",
     "torch>=2.9.1",
     "torchvision>=0.24.1",
 ]

@@ -1,6 +1,5 @@
 from ml_tools.ML_optimization_pareto import DragonParetoOptimizer
 from ml_tools.ML_inference import DragonInferenceHandler
-from ml_tools.schema import FeatureSchema
 from ml_tools.ML_models_advanced import DragonNodeModel
 from ml_tools.ML_utilities import ArtifactFinder
 
@@ -8,11 +7,10 @@ from helpers.constants import CONTINUOUS_OPTIMIZATION_RANGE, CONTINUOUS_INTEGER_
 from paths import PM
 
 
-# reconstruct feature schema
-feature_schema = FeatureSchema.from_json(directory=PM.optimization_engineering)
-
 # Load artifacts
-artifacts = ArtifactFinder(directory=PM.optimization_train_artifacts, load_scaler=True)
+artifacts = ArtifactFinder(directory=PM.optimization_train_artifacts, 
+                           load_scaler=True,
+                           load_schema=True)
 
 # Define model architecture
 model = DragonNodeModel.load(artifacts.model_architecture_path)
@@ -35,7 +33,7 @@ objectives = {
 # Initialize optimizer
 optimizer = DragonParetoOptimizer(
     inference_handler=inference_handler,
-    schema=feature_schema,
+    schema=artifacts.feature_schema,
     target_objectives=objectives, # type: ignore
     continuous_bounds_map=CONTINUOUS_OPTIMIZATION_RANGE,
     population_size=500,
