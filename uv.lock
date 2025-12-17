@@ -336,11 +336,11 @@ wheels = [
 
 [[package]]
 name = "dragon-ml-toolbox"
-version = "19.5.0"
+version = "19.9.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/52/22/e13f7ec8c9d7079aec3b872162770ad8775418811fc28348206cc6970729/dragon_ml_toolbox-19.5.0.tar.gz", hash = "sha256:965a50b1182d2568be5fbd600fed4828fea8beeac437395a05ad59a4d105a000", size = 280750, upload-time = "2025-12-13T05:38:50.112Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/49/9e/9d206a8b93faa8ec3b8d010b99d6f3104243814169d389ceae6f90d7eb58/dragon_ml_toolbox-19.9.0.tar.gz", hash = "sha256:acce552b455dde29b587a3129b196aec01aadf60427cff9ba95d72ea904fddba", size = 287548, upload-time = "2025-12-16T11:30:07.358Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e7/01/fec2a0d3a4fee7f5c6207b916e6f8e96fee9e04a445576b1df7af1d60878/dragon_ml_toolbox-19.5.0-py3-none-any.whl", hash = "sha256:ea3bbdea1fa0f74442dd7383654c949a8bdf8a314f57fd345093237052b88531", size = 324684, upload-time = "2025-12-13T05:38:47.652Z" },
+    { url = "https://files.pythonhosted.org/packages/22/cd/9c534544be7db876a4ba51c17837a07a7b30b9390ccc36344b1ac842aa34/dragon_ml_toolbox-19.9.0-py3-none-any.whl", hash = "sha256:3b0c990d448a704154bccf328ba0d25b79cd0882084b698bde2b5bf51f65f871", size = 330994, upload-time = "2025-12-16T11:30:09.515Z" },
 ]
 
 [package.optional-dependencies]
@@ -918,7 +918,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dragon-ml-toolbox", extras = ["ml"], specifier = "==19.5.0" },
+    { name = "dragon-ml-toolbox", extras = ["ml"], specifier = "==19.9.0" },
     { name = "torch", specifier = ">=2.9.1" },
     { name = "torchvision", specifier = ">=0.24.1" },
 ]
