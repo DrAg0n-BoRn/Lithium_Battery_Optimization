@@ -27,7 +27,10 @@ def optimization_config():
     )
 
     # ML Artifacts
-    ARTIFACTS = ArtifactFinder(directory=PM.optimization_train_artifacts, load_scaler=True, load_schema=True)
+    ARTIFACTS = ArtifactFinder(directory=PM.optimization_train_artifacts, 
+                               load_scaler=True, 
+                               load_schema=True,
+                               strict=True)
     
     return PARETO_CONFIG, ARTIFACTS
 
@@ -37,19 +40,19 @@ def main():
     PARETO_CONFIG, ARTIFACTS = optimization_config()
     
     # Define model architecture
-    model = DragonNodeModel.load(ARTIFACTS.model_architecture_path)
+    model = DragonNodeModel.load(ARTIFACTS.model_architecture_path) # type: ignore
 
     # Define inference handler
     inference_handler = DragonInferenceHandler(
         model=model,
-        state_dict=ARTIFACTS.weights_path,
+        state_dict=ARTIFACTS.weights_path, # type: ignore
         device="cuda:0",
         scaler=ARTIFACTS.scaler_path
     )
 
     # Initialize optimizer
     optimizer = DragonParetoOptimizer(inference_handler=inference_handler,
-                                      schema=ARTIFACTS.feature_schema,
+                                      schema=ARTIFACTS.feature_schema, # type: ignore
                                       config=PARETO_CONFIG)
 
     # Run optimization
