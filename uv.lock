@@ -336,11 +336,11 @@ wheels = [
 
 [[package]]
 name = "dragon-ml-toolbox"
-version = "19.12.1"
+version = "20.5.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/63/66/dcf2d2af15d65a7619436ac33f435ded24a2c0dc25601c76f94e643a2f8f/dragon_ml_toolbox-19.12.1.tar.gz", hash = "sha256:630341a0fbee6125aab27588f6251e3646bf39cfb14132fe43827cdcc33f62e1", size = 293930, upload-time = "2025-12-20T03:16:33.945Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6d/f5/6b8dfb24a877c20ca7fd3e6e64eb2c7e3e92472cde1e3a4767be432a0ad3/dragon_ml_toolbox-20.5.0.tar.gz", hash = "sha256:44cbafb35d7348625bb4141336f1efa5e25d70a9f570eee07b5120ce9b7fdf6d", size = 294678, upload-time = "2025-12-30T09:13:09.507Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/62/69/0f04c9917460fce14f85db2eb79c4d48c065d756a084ddb61bd4391f31de/dragon_ml_toolbox-19.12.1-py3-none-any.whl", hash = "sha256:5eb5f8c66992ae86d24d5d6a394cc0ecf83f06361eb747e986d03f8693cb6851", size = 336815, upload-time = "2025-12-20T03:16:36.438Z" },
+    { url = "https://files.pythonhosted.org/packages/a6/6f/73d763d5577268685fa695db0319749922a06f3446d167e4100de849f43c/dragon_ml_toolbox-20.5.0-py3-none-any.whl", hash = "sha256:d6b706cc38ba9a68f4bc60657e4f5d400ed5d52ffad75d4382fe94a34d27aed1", size = 369829, upload-time = "2025-12-30T09:13:11.399Z" },
 ]
 
 [package.optional-dependencies]
@@ -364,7 +364,9 @@ ml = [
     { name = "scikit-learn" },
     { name = "seaborn" },
     { name = "shap" },
+    { name = "torch" },
     { name = "torchmetrics" },
+    { name = "torchvision" },
     { name = "tqdm" },
 ]
 
@@ -903,7 +905,7 @@ wheels = [
 
 [[package]]
 name = "lithiumbatterydesign"
-version = "2.1.0"
+version = "3.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "dragon-ml-toolbox", extra = ["ml"] },
@@ -918,7 +920,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dragon-ml-toolbox", extras = ["ml"], specifier = "==19.12.1" },
+    { name = "dragon-ml-toolbox", extras = ["ml"], specifier = "==20.5.0" },
     { name = "torch", specifier = ">=2.9.1" },
     { name = "torchvision", specifier = ">=0.24.1" },
 ]
