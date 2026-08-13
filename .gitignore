@@ -13,3 +13,4 @@ backups/
 
 # Use jupytext
 *.ipynb
+Icon?
